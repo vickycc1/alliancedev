@@ -1,6 +1,6 @@
 # Dependencies
 frontend/node_modules/
-
+admin/node_modules/
 # IDE
 frontend/.trae/
 

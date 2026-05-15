@@ -48,6 +48,7 @@ export default function Profile() {
   const { id } = useParams()
   const currentUser = useAuthStore((s) => s.user)
   const setUser = useAuthStore((s) => s.setUser)
+  const fetchProfile = useAuthStore((s) => s.fetchProfile)
   const isSelf = !id || (currentUser && String(currentUser.id) === id)
 
   const [profileUser, setProfileUser] = useState<User | null>(null)
@@ -58,13 +59,29 @@ export default function Profile() {
   const [editForm] = Form.useForm()
 
   useEffect(() => {
-    if (isSelf && currentUser) {
-      setProfileUser(currentUser)
-      setLoading(false)
+    if (isSelf) {
+      if (currentUser) {
+        setProfileUser(currentUser)
+        setLoading(false)
+      } else {
+        fetchProfile().then(() => {}).catch(() => {}).finally(() => {
+          const user = useAuthStore.getState().user
+          if (user) {
+            setProfileUser(user)
+          }
+          setLoading(false)
+        })
+      }
     } else if (id) {
       fetchUserProfile(Number(id))
     }
-  }, [id, currentUser, isSelf])
+  }, [id, isSelf])
+
+  useEffect(() => {
+    if (isSelf && currentUser && profileUser?.id === currentUser.id) {
+      setProfileUser(currentUser)
+    }
+  }, [currentUser, isSelf, profileUser?.id])
 
   const fetchUserProfile = async (userId: number) => {
     setLoading(true)

@@ -18,9 +18,7 @@ const request = axios.create({
 })
 
 if (import.meta.env.DEV) {
-  import('@/mock/handlers').then(({ setupMockInterceptor }) => {
-    setupMockInterceptor(request)
-  })
+  // Mock interceptor is initialized synchronously in main.tsx before App renders
 }
 
 let isRefreshing = false

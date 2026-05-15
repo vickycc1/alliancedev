@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { List, Tabs, Tag, Empty, Spin, Pagination, Typography } from 'antd'
+import { List, Tabs, Tag, Empty, Spin, Pagination, Typography, Card } from 'antd'
 import { EyeOutlined, LikeOutlined, MessageOutlined, StarOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import request from '@/api'
