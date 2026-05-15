@@ -6,6 +6,9 @@ import MainLayout from '@/components/Layout/MainLayout'
 import AdminLayout from '@/components/Layout/AdminLayout'
 
 const Home = lazy(() => import('@/pages/Home'))
+const Hot = lazy(() => import('@/pages/Hot'))
+const Essence = lazy(() => import('@/pages/Essence'))
+const Category = lazy(() => import('@/pages/Category'))
 const Login = lazy(() => import('@/pages/Login'))
 const Register = lazy(() => import('@/pages/Register'))
 const Post = lazy(() => import('@/pages/Post'))
@@ -44,8 +47,11 @@ export default function AppRoutes() {
 
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
+          <Route path="/hot" element={<Hot />} />
+          <Route path="/essence" element={<Essence />} />
+          <Route path="/category/:id" element={<Category />} />
           <Route path="/search" element={<Search />} />
-          <Route path="/post/:id" element={<AuthGuard><Post /></AuthGuard>} />
+          <Route path="/post/:id" element={<Post />} />
           <Route path="/new-post" element={<AuthGuard><NewPost /></AuthGuard>} />
           <Route path="/edit-post/:id" element={<AuthGuard><EditPost /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />

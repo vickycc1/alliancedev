@@ -3,11 +3,16 @@ import { Outlet } from 'react-router-dom'
 import { Layout } from 'antd'
 import Header from './Header'
 import Sidebar from './Sidebar'
+import { useAuthStore } from '@/store/useAuthStore'
+import { useWebSocket } from '@/hooks/useWebSocket'
 
 const { Content } = Layout
 
 export default function MainLayout() {
   const [collapsed, setCollapsed] = useState(false)
+  const user = useAuthStore((s) => s.user)
+
+  useWebSocket({ enabled: !!user })
 
   return (
     <Layout style={{ minHeight: '100vh' }}>

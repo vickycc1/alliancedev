@@ -1,8 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Input, Avatar, Dropdown, Badge, Space, Typography } from 'antd'
+import { Layout, Avatar, Dropdown, Space, Typography } from 'antd'
 import {
-  SearchOutlined,
-  BellOutlined,
   UserOutlined,
   LogoutOutlined,
   SettingOutlined,
@@ -11,7 +9,8 @@ import {
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { useAuthStore } from '@/store/useAuthStore'
-import { useNotificationStore } from '@/store/useNotificationStore'
+import HeaderSearch from '@/components/HeaderSearch'
+import NotificationBell from '@/components/NotificationBell'
 
 const { Header: AntHeader } = Layout
 const { Text } = Typography
@@ -25,7 +24,6 @@ export default function Header({ collapsed, onCollapse }: HeaderProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout } = useAuthStore()
-  const unreadCount = useNotificationStore((s) => s.unreadCount)
 
   const userMenuItems: MenuProps['items'] = [
     {
@@ -81,25 +79,12 @@ export default function Header({ collapsed, onCollapse }: HeaderProps) {
         </Text>
       </Space>
 
-      <Space size="middle" style={{ flex: 1, maxWidth: 400, margin: '0 48px' }}>
-        <Input
-          placeholder="搜索帖子、用户..."
-          prefix={<SearchOutlined style={{ color: '#8F959E' }} />}
-          style={{ borderRadius: 6 }}
-          onPressEnter={(e) => {
-            const value = (e.target as HTMLInputElement).value.trim()
-            if (value) navigate(`/search?keyword=${encodeURIComponent(value)}`)
-          }}
-        />
-      </Space>
+      <div style={{ flex: 1, maxWidth: 400, margin: '0 48px' }}>
+        <HeaderSearch />
+      </div>
 
       <Space size="middle">
-        <Badge count={unreadCount} size="small" offset={[-2, 2]}>
-          <BellOutlined
-            style={{ fontSize: 20, cursor: 'pointer', color: '#1F2329' }}
-            onClick={() => navigate('/notifications')}
-          />
-        </Badge>
+        <NotificationBell />
 
         {user ? (
           <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">

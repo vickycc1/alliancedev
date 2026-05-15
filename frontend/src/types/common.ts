@@ -82,7 +82,8 @@ export enum RoleCode {
 
 export enum SortBy {
   LATEST = 'LATEST',
-  HOT = 'HOT',
+  HOTTEST = 'HOTTEST',
+  MOST_COMMENTS = 'MOST_COMMENTS',
   TOP = 'TOP',
 }
 

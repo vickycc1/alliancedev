@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Layout, Menu } from 'antd'
 import {
@@ -8,6 +9,9 @@ import {
   EditOutlined,
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
+import request from '@/api'
+import type { Result } from '@/types/common'
+import type { CategoryTree } from '@/types/category'
 
 const { Sider } = Layout
 
@@ -15,44 +19,48 @@ interface SidebarProps {
   collapsed: boolean
 }
 
-const menuItems: MenuProps['items'] = [
-  {
-    key: '/',
-    icon: <HomeOutlined />,
-    label: '首页',
-  },
-  {
-    key: 'hot',
-    icon: <FireOutlined />,
-    label: '热门',
-  },
-  {
-    key: 'essence',
-    icon: <StarOutlined />,
-    label: '精华',
-  },
-  {
-    key: 'categories',
-    icon: <AppstoreOutlined />,
-    label: '板块',
-    children: [
-      { key: '/category/backend', label: '后端开发' },
-      { key: '/category/frontend', label: '前端开发' },
-      { key: '/category/devops', label: '运维部署' },
-      { key: '/category/ai', label: 'AI与数据' },
-      { key: '/category/career', label: '职场发展' },
-    ],
-  },
-  {
-    key: '/new-post',
-    icon: <EditOutlined />,
-    label: '发帖',
-  },
-]
-
 export default function Sidebar({ collapsed }: SidebarProps) {
   const navigate = useNavigate()
   const location = useLocation()
+  const [categories, setCategories] = useState<CategoryTree[]>([])
+
+  useEffect(() => {
+    request.get<Result<CategoryTree[]>>('/categories').then(({ data }) => {
+      if (data.data) setCategories(data.data)
+    })
+  }, [])
+
+  const menuItems: MenuProps['items'] = [
+    {
+      key: '/',
+      icon: <HomeOutlined />,
+      label: '首页',
+    },
+    {
+      key: '/hot',
+      icon: <FireOutlined />,
+      label: '热门',
+    },
+    {
+      key: '/essence',
+      icon: <StarOutlined />,
+      label: '精华',
+    },
+    {
+      key: 'categories-group',
+      icon: <AppstoreOutlined />,
+      label: '板块',
+      children: categories.map((cat) => ({
+        key: `/category/${cat.id}`,
+        label: cat.name,
+      })),
+    },
+    {
+      key: '/new-post',
+      icon: <EditOutlined />,
+      label: '发帖',
+    },
+  ]
 
   const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     if (key.startsWith('/')) {
@@ -61,6 +69,8 @@ export default function Sidebar({ collapsed }: SidebarProps) {
   }
 
   const selectedKeys = [location.pathname]
+
+  const defaultOpenKeys = ['categories-group']
 
   return (
     <Sider
@@ -82,6 +92,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
       <Menu
         mode="inline"
         selectedKeys={selectedKeys}
+        defaultOpenKeys={defaultOpenKeys}
         items={menuItems}
         onClick={handleMenuClick}
         style={{

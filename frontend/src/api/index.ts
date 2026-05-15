@@ -17,6 +17,12 @@ const request = axios.create({
   },
 })
 
+if (import.meta.env.DEV) {
+  import('@/mock/handlers').then(({ setupMockInterceptor }) => {
+    setupMockInterceptor(request)
+  })
+}
+
 let isRefreshing = false
 let pendingRequests: Array<(token: string) => void> = []
 
