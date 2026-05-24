@@ -124,7 +124,9 @@ public class AuthServiceImpl implements AuthService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId(), user.getUsername());
 
         String tokenKey = "token:" + user.getId();
+        String refreshTokenKey = "refresh_token:" + user.getId();
         redisTemplate.opsForValue().set(tokenKey, token, jwtConfig.getExpiration(), TimeUnit.MILLISECONDS);
+        redisTemplate.opsForValue().set(refreshTokenKey, refreshToken, jwtConfig.getRefreshExpiration(), TimeUnit.MILLISECONDS);
 
         LoginResponse response = new LoginResponse();
         response.setToken(token);
@@ -144,6 +146,13 @@ public class AuthServiceImpl implements AuthService {
         Long userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
         String username = jwtTokenProvider.getUsernameFromToken(refreshToken);
 
+        String refreshTokenKey = "refresh_token:" + userId;
+        Object storedRefreshToken = redisTemplate.opsForValue().get(refreshTokenKey);
+        if (storedRefreshToken == null || !storedRefreshToken.toString().equals(refreshToken)) {
+            log.warn("无效的refreshToken, userId: {}", userId);
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
         User user = userMapper.selectById(userId);
         if (user == null || user.getStatus() != Constants.USER_STATUS_NORMAL) {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
@@ -154,6 +163,7 @@ public class AuthServiceImpl implements AuthService {
 
         String tokenKey = "token:" + userId;
         redisTemplate.opsForValue().set(tokenKey, newToken, jwtConfig.getExpiration(), TimeUnit.MILLISECONDS);
+        redisTemplate.opsForValue().set(refreshTokenKey, newRefreshToken, jwtConfig.getRefreshExpiration(), TimeUnit.MILLISECONDS);
 
         LoginResponse response = new LoginResponse();
         response.setToken(newToken);
@@ -173,7 +183,9 @@ public class AuthServiceImpl implements AuthService {
             );
             if (user != null) {
                 String tokenKey = "token:" + user.getId();
+                String refreshTokenKey = "refresh_token:" + user.getId();
                 redisTemplate.delete(tokenKey);
+                redisTemplate.delete(refreshTokenKey);
             }
         }
     }

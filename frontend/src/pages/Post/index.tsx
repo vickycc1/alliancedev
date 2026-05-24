@@ -79,7 +79,7 @@ export default function Post() {
       cancelText: '取消',
       onOk: async () => {
         try {
-          await request.post('/reports', { targetId: post?.id, targetType: TargetType.POST, reason: '内容违规' })
+          await request.post('/interaction/report', { targetId: post?.id, targetType: TargetType.POST, reason: '内容违规' })
           message.success('举报成功，管理员将尽快处理')
         } catch {
           message.error('举报失败')

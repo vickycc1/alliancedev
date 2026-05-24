@@ -2,6 +2,7 @@ package com.techcommunity.controller;
 
 import com.techcommunity.common.Result;
 import com.techcommunity.dto.request.LoginRequest;
+import com.techcommunity.dto.request.RefreshTokenRequest;
 import com.techcommunity.dto.request.RegisterRequest;
 import com.techcommunity.dto.response.LoginResponse;
 import com.techcommunity.dto.response.UserResponse;
@@ -30,8 +31,8 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public Result<LoginResponse> refreshToken(@RequestBody String refreshToken) {
-        LoginResponse response = authService.refreshToken(refreshToken);
+    public Result<LoginResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+        LoginResponse response = authService.refreshToken(request.getRefreshToken());
         return Result.success(response);
     }
 

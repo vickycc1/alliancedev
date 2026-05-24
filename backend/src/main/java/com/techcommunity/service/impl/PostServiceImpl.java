@@ -1,26 +1,27 @@
 package com.techcommunity.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.techcommunity.common.Constants;
 import com.techcommunity.common.ErrorCode;
 import com.techcommunity.common.PageResult;
 import com.techcommunity.dto.request.PostCreateRequest;
-import com.techcommunity.dto.response.AiResponseDTO;
-import com.techcommunity.dto.response.PostResponse;
-import com.techcommunity.dto.response.UserResponse;
+import com.techcommunity.dto.response.*;
 import com.techcommunity.entity.*;
 import com.techcommunity.exception.BusinessException;
 import com.techcommunity.mapper.*;
+import com.techcommunity.service.ContentFilterService;
 import com.techcommunity.service.PostService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
@@ -33,6 +34,7 @@ public class PostServiceImpl implements PostService {
     private final LikeMapper likeMapper;
     private final FavoriteMapper favoriteMapper;
     private final AiResponseMapper aiResponseMapper;
+    private final ContentFilterService contentFilterService;
 
     @Override
     @Transactional
@@ -49,12 +51,19 @@ public class PostServiceImpl implements PostService {
             throw new BusinessException(ErrorCode.CATEGORY_NOT_LEAF);
         }
 
+        String title = contentFilterService.cleanHtml(request.getTitle());
+        String content = contentFilterService.cleanHtml(request.getContent());
+
+        if (contentFilterService.containsSensitiveWord(title) || contentFilterService.containsSensitiveWord(content)) {
+            throw new BusinessException(ErrorCode.CONTENT_SENSITIVE);
+        }
+
         Post post = new Post();
         post.setCategoryId(request.getCategoryId());
         post.setUserId(userId);
-        post.setTitle(request.getTitle());
-        post.setContent(request.getContent());
-        post.setSummary(generateSummary(request.getContent()));
+        post.setTitle(title);
+        post.setContent(content);
+        post.setSummary(generateSummary(content));
         post.setViewCount(0);
         post.setLikeCount(0);
         post.setCommentCount(0);
@@ -106,9 +115,16 @@ public class PostServiceImpl implements PostService {
             throw new BusinessException(ErrorCode.POST_BLOCKED);
         }
 
-        post.setTitle(request.getTitle());
-        post.setContent(request.getContent());
-        post.setSummary(generateSummary(request.getContent()));
+        String title = contentFilterService.cleanHtml(request.getTitle());
+        String content = contentFilterService.cleanHtml(request.getContent());
+
+        if (contentFilterService.containsSensitiveWord(title) || contentFilterService.containsSensitiveWord(content)) {
+            throw new BusinessException(ErrorCode.CONTENT_SENSITIVE);
+        }
+
+        post.setTitle(title);
+        post.setContent(content);
+        post.setSummary(generateSummary(content));
         if (request.getCategoryId() != null) {
             post.setCategoryId(request.getCategoryId());
         }
@@ -130,6 +146,12 @@ public class PostServiceImpl implements PostService {
 
         post.setStatus(Constants.POST_STATUS_DELETED);
         postMapper.updateById(post);
+
+        Category category = categoryMapper.selectById(post.getCategoryId());
+        if (category != null && category.getPostCount() > 0) {
+            category.setPostCount(category.getPostCount() - 1);
+            categoryMapper.updateById(category);
+        }
     }
 
     @Override
@@ -166,8 +188,21 @@ public class PostServiceImpl implements PostService {
 
         Page<Post> pageResult = postMapper.selectPage(new Page<>(page, size), wrapper);
 
-        List<PostResponse> list = pageResult.getRecords().stream()
-                .map(post -> buildPostResponse(post, null))
+        List<Post> posts = pageResult.getRecords();
+        if (posts.isEmpty()) {
+            return PageResult.of(Collections.emptyList(), pageResult.getTotal(), page, size);
+        }
+
+        Set<Long> userIds = posts.stream().map(Post::getUserId).collect(Collectors.toSet());
+        Set<Long> categoryIds = posts.stream().map(Post::getCategoryId).collect(Collectors.toSet());
+
+        Map<Long, User> userMap = userMapper.selectBatchIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+        Map<Long, Category> categoryMap = categoryMapper.selectBatchIds(categoryIds).stream()
+                .collect(Collectors.toMap(Category::getId, Function.identity()));
+
+        List<PostResponse> list = posts.stream()
+                .map(post -> buildPostListResponse(post, userMap, categoryMap))
                 .collect(Collectors.toList());
 
         return PageResult.of(list, pageResult.getTotal(), page, size);
@@ -204,6 +239,12 @@ public class PostServiceImpl implements PostService {
         }
         post.setStatus(Constants.POST_STATUS_BLOCKED);
         postMapper.updateById(post);
+
+        Category category = categoryMapper.selectById(post.getCategoryId());
+        if (category != null && category.getPostCount() > 0) {
+            category.setPostCount(category.getPostCount() - 1);
+            categoryMapper.updateById(category);
+        }
     }
 
     private PostResponse buildPostResponse(Post post, Long currentUserId) {
@@ -258,6 +299,49 @@ public class PostServiceImpl implements PostService {
             response.setLiked(false);
             response.setFavorited(false);
         }
+
+        return response;
+    }
+
+    private PostResponse buildPostListResponse(Post post, Map<Long, User> userMap, Map<Long, Category> categoryMap) {
+        PostResponse response = new PostResponse();
+        response.setId(post.getId());
+        response.setCategoryId(post.getCategoryId());
+        response.setTitle(post.getTitle());
+        response.setSummary(post.getSummary());
+        response.setViewCount(post.getViewCount());
+        response.setLikeCount(post.getLikeCount());
+        response.setCommentCount(post.getCommentCount());
+        response.setFavoriteCount(post.getFavoriteCount());
+        response.setIsTop(post.getIsTop());
+        response.setIsEssence(post.getIsEssence());
+        response.setAiRequested(post.getAiRequested());
+        response.setStatus(post.getStatus());
+        response.setCreatedAt(post.getCreatedAt());
+
+        Category category = categoryMap.get(post.getCategoryId());
+        if (category != null) {
+            response.setCategoryName(category.getName());
+        }
+
+        User author = userMap.get(post.getUserId());
+        if (author != null) {
+            UserSimpleResponse simpleUser = new UserSimpleResponse();
+            simpleUser.setId(author.getId());
+            simpleUser.setUsername(author.getUsername());
+            simpleUser.setNickname(author.getNickname());
+            simpleUser.setAvatar(author.getAvatar());
+            PostResponse temp = new PostResponse();
+            temp.setAuthor(new UserResponse());
+            temp.getAuthor().setId(author.getId());
+            temp.getAuthor().setUsername(author.getUsername());
+            temp.getAuthor().setNickname(author.getNickname());
+            temp.getAuthor().setAvatar(author.getAvatar());
+            response.setAuthor(temp.getAuthor());
+        }
+
+        response.setLiked(false);
+        response.setFavorited(false);
 
         return response;
     }

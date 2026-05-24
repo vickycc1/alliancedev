@@ -1,8 +1,8 @@
 package com.techcommunity.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.techcommunity.common.Constants;
+import com.techcommunity.dto.request.ReportCreateRequest;
 import com.techcommunity.entity.*;
 import com.techcommunity.mapper.*;
 import com.techcommunity.service.InteractionService;
@@ -17,6 +17,7 @@ public class InteractionServiceImpl implements InteractionService {
     private final LikeMapper likeMapper;
     private final FavoriteMapper favoriteMapper;
     private final ShareMapper shareMapper;
+    private final ReportMapper reportMapper;
     private final PostMapper postMapper;
     private final CommentMapper commentMapper;
 
@@ -82,6 +83,19 @@ public class InteractionServiceImpl implements InteractionService {
             post.setShareCount(post.getShareCount() + 1);
             postMapper.updateById(post);
         }
+    }
+
+    @Override
+    @Transactional
+    public Long createReport(ReportCreateRequest request, Long userId) {
+        Report report = new Report();
+        report.setUserId(userId);
+        report.setTargetId(request.getTargetId());
+        report.setTargetType(request.getTargetType());
+        report.setReason(request.getReason());
+        report.setStatus(Constants.REPORT_STATUS_PENDING);
+        reportMapper.insert(report);
+        return report.getId();
     }
 
     @Override

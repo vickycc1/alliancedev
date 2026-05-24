@@ -1,7 +1,6 @@
 package com.techcommunity.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.techcommunity.common.Constants;
 import com.techcommunity.common.ErrorCode;
@@ -17,6 +16,7 @@ import com.techcommunity.mapper.CommentMapper;
 import com.techcommunity.mapper.PostMapper;
 import com.techcommunity.mapper.UserMapper;
 import com.techcommunity.service.CommentService;
+import com.techcommunity.service.ContentFilterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +33,7 @@ public class CommentServiceImpl implements CommentService {
     private final CommentMapper commentMapper;
     private final PostMapper postMapper;
     private final UserMapper userMapper;
+    private final ContentFilterService contentFilterService;
 
     @Override
     @Transactional
@@ -42,12 +43,17 @@ public class CommentServiceImpl implements CommentService {
             throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
+        String content = contentFilterService.cleanHtml(request.getContent());
+        if (contentFilterService.containsSensitiveWord(content)) {
+            throw new BusinessException(ErrorCode.CONTENT_SENSITIVE);
+        }
+
         Comment comment = new Comment();
         comment.setPostId(request.getPostId());
         comment.setUserId(userId);
         comment.setParentId(request.getParentId() != null ? request.getParentId() : 0L);
         comment.setReplyToUserId(request.getReplyToUserId());
-        comment.setContent(request.getContent());
+        comment.setContent(content);
         comment.setLikeCount(0);
         comment.setStatus(Constants.COMMENT_STATUS_NORMAL);
 

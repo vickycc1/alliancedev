@@ -28,7 +28,7 @@ export default function LikeButton({
   const handleToggle = async () => {
     setLoading(true)
     try {
-      await request.post('/likes/toggle', { targetId, targetType })
+      await request.post('/interaction/like', { targetId, targetType })
       const newLiked = !liked
       const newCount = newLiked ? likeCount + 1 : likeCount - 1
       onLikeChange?.(newLiked, newCount)

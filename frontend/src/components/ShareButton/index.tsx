@@ -40,7 +40,7 @@ export default function ShareButton({ postId, title, size = 'middle' }: ShareBut
 
   const recordShare = async (channel: ShareChannel) => {
     try {
-      await request.post('/shares', { postId, channel })
+      await request.post('/interaction/share', null, { params: { postId, channel } })
     } catch {
       // ignore
     }

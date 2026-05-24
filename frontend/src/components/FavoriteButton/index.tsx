@@ -25,7 +25,7 @@ export default function FavoriteButton({
   const handleToggle = async () => {
     setLoading(true)
     try {
-      await request.post('/favorites/toggle', { postId })
+      await request.post('/interaction/favorite', null, { params: { postId } })
       const newFavorited = !favorited
       const newCount = newFavorited ? favoriteCount + 1 : favoriteCount - 1
       onFavoriteChange?.(newFavorited, newCount)

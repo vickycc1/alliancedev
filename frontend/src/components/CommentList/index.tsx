@@ -48,7 +48,7 @@ function CommentItem({
     if (liking) return
     setLiking(true)
     try {
-      await request.post('/likes/toggle', { targetId: comment.id, targetType: 2 as TargetType })
+      await request.post('/interaction/like', { targetId: comment.id, targetType: 2 as TargetType })
       setLiked(!liked)
       setLikeCount(liked ? likeCount - 1 : likeCount + 1)
     } catch {

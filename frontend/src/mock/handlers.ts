@@ -307,7 +307,7 @@ const handlers: Array<{
   },
   {
     method: 'POST',
-    pattern: 'shares',
+    pattern: 'interaction/share',
     handler: () => ok(null),
   },
   {
