@@ -157,12 +157,16 @@ public class PostServiceImpl implements PostService {
     @Override
     public PageResult<PostResponse> getPostList(Long categoryId, String keyword, String sortBy,
                                                   Boolean isTop, Boolean isEssence, Long authorId,
+                                                  Long currentUserId,
                                                   Integer page, Integer size) {
         LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Post::getStatus, Constants.POST_STATUS_NORMAL);
 
         if (categoryId != null) {
-            wrapper.eq(Post::getCategoryId, categoryId);
+            Set<Long> categoryIds = new HashSet<>();
+            categoryIds.add(categoryId);
+            collectChildCategoryIds(categoryId, categoryIds);
+            wrapper.in(Post::getCategoryId, categoryIds);
         }
         if (keyword != null && !keyword.isEmpty()) {
             wrapper.and(w -> w.like(Post::getTitle, keyword).or().like(Post::getContent, keyword));
@@ -177,12 +181,13 @@ public class PostServiceImpl implements PostService {
             wrapper.eq(Post::getUserId, authorId);
         }
 
-        wrapper.orderByDesc(Post::getIsTop);
         if ("HOTTEST".equals(sortBy)) {
-            wrapper.orderByDesc(Post::getViewCount);
+            wrapper.last("ORDER BY is_top DESC, (view_count * 1 + like_count * 3 + comment_count * 5 + favorite_count * 2) DESC");
         } else if ("MOST_COMMENTS".equals(sortBy)) {
+            wrapper.orderByDesc(Post::getIsTop);
             wrapper.orderByDesc(Post::getCommentCount);
         } else {
+            wrapper.orderByDesc(Post::getIsTop);
             wrapper.orderByDesc(Post::getCreatedAt);
         }
 
@@ -202,10 +207,42 @@ public class PostServiceImpl implements PostService {
                 .collect(Collectors.toMap(Category::getId, Function.identity()));
 
         List<PostResponse> list = posts.stream()
-                .map(post -> buildPostListResponse(post, userMap, categoryMap))
+                .map(post -> buildPostListResponse(post, userMap, categoryMap, currentUserId))
                 .collect(Collectors.toList());
 
         return PageResult.of(list, pageResult.getTotal(), page, size);
+    }
+
+    @Override
+    public PageResult<PostResponse> getPostsByIds(List<Long> postIds, Long currentUserId, Integer page, Integer size) {
+        if (postIds == null || postIds.isEmpty()) {
+            return PageResult.of(Collections.emptyList(), 0L, page, size);
+        }
+
+        LambdaQueryWrapper<Post> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Post::getStatus, Constants.POST_STATUS_NORMAL);
+        wrapper.in(Post::getId, postIds);
+        wrapper.orderByDesc(Post::getCreatedAt);
+
+        Page<Post> pageResult = postMapper.selectPage(new Page<>(page, size), wrapper);
+        List<Post> posts = pageResult.getRecords();
+        if (posts.isEmpty()) {
+            return PageResult.of(Collections.emptyList(), pageResult.getTotal(), page, size);
+        }
+
+        Set<Long> userIds = posts.stream().map(Post::getUserId).collect(Collectors.toSet());
+        Set<Long> categoryIds = posts.stream().map(Post::getCategoryId).collect(Collectors.toSet());
+
+        Map<Long, User> userMap = userMapper.selectBatchIds(userIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+        Map<Long, Category> categoryMap = categoryMapper.selectBatchIds(categoryIds).stream()
+                .collect(Collectors.toMap(Category::getId, Function.identity()));
+
+        List<PostResponse> list = posts.stream()
+                .map(post -> buildPostListResponse(post, userMap, categoryMap, currentUserId))
+                .collect(Collectors.toList());
+
+        return PageResult.of(list, (long) postIds.size(), page, size);
     }
 
     @Override
@@ -238,6 +275,46 @@ public class PostServiceImpl implements PostService {
             throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
         post.setStatus(Constants.POST_STATUS_BLOCKED);
+        postMapper.updateById(post);
+
+        Category category = categoryMapper.selectById(post.getCategoryId());
+        if (category != null && category.getPostCount() > 0) {
+            category.setPostCount(category.getPostCount() - 1);
+            categoryMapper.updateById(category);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void movePost(Long postId, Long categoryId) {
+        Post post = postMapper.selectById(postId);
+        if (post == null) {
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
+        }
+        Category newCategory = categoryMapper.selectById(categoryId);
+        if (newCategory == null) {
+            throw new BusinessException(ErrorCode.CATEGORY_NOT_FOUND);
+        }
+        Category oldCategory = categoryMapper.selectById(post.getCategoryId());
+        post.setCategoryId(categoryId);
+        postMapper.updateById(post);
+
+        if (oldCategory != null && oldCategory.getPostCount() > 0) {
+            oldCategory.setPostCount(oldCategory.getPostCount() - 1);
+            categoryMapper.updateById(oldCategory);
+        }
+        newCategory.setPostCount(newCategory.getPostCount() + 1);
+        categoryMapper.updateById(newCategory);
+    }
+
+    @Override
+    @Transactional
+    public void adminDeletePost(Long postId) {
+        Post post = postMapper.selectById(postId);
+        if (post == null) {
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
+        }
+        post.setStatus(Constants.POST_STATUS_DELETED);
         postMapper.updateById(post);
 
         Category category = categoryMapper.selectById(post.getCategoryId());
@@ -303,7 +380,7 @@ public class PostServiceImpl implements PostService {
         return response;
     }
 
-    private PostResponse buildPostListResponse(Post post, Map<Long, User> userMap, Map<Long, Category> categoryMap) {
+    private PostResponse buildPostListResponse(Post post, Map<Long, User> userMap, Map<Long, Category> categoryMap, Long currentUserId) {
         PostResponse response = new PostResponse();
         response.setId(post.getId());
         response.setCategoryId(post.getCategoryId());
@@ -340,8 +417,13 @@ public class PostServiceImpl implements PostService {
             response.setAuthor(temp.getAuthor());
         }
 
-        response.setLiked(false);
-        response.setFavorited(false);
+        if (currentUserId != null) {
+            response.setLiked(isLiked(currentUserId, post.getId(), Constants.TARGET_TYPE_POST));
+            response.setFavorited(isFavorited(currentUserId, post.getId()));
+        } else {
+            response.setLiked(false);
+            response.setFavorited(false);
+        }
 
         return response;
     }
@@ -400,5 +482,15 @@ public class PostServiceImpl implements PostService {
                         .eq(Favorite::getUserId, userId)
                         .eq(Favorite::getPostId, postId)
         ) > 0;
+    }
+
+    private void collectChildCategoryIds(Long parentId, Set<Long> result) {
+        List<Category> children = categoryMapper.selectList(
+                new LambdaQueryWrapper<Category>().eq(Category::getParentId, parentId)
+        );
+        for (Category child : children) {
+            result.add(child.getId());
+            collectChildCategoryIds(child.getId(), result);
+        }
     }
 }

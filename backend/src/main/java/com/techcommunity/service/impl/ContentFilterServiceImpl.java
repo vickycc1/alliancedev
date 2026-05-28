@@ -24,6 +24,7 @@ public class ContentFilterServiceImpl implements ContentFilterService {
     private boolean filterEnabled;
 
     private Map<Character, Set<String>> sensitiveWordMap = new HashMap<>();
+    private Set<String> allSensitiveWords = new HashSet<>();
 
     private static final Pattern HTML_TAG_PATTERN = Pattern.compile("<[^>]*>");
     private static final Pattern SCRIPT_PATTERN = Pattern.compile("<script[^>]*>.*?</script>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
@@ -56,8 +57,11 @@ public class ContentFilterServiceImpl implements ContentFilterService {
                     new LambdaQueryWrapper<SensitiveWord>()
             );
             for (SensitiveWord word : words) {
-                char firstChar = word.getWord().charAt(0);
-                sensitiveWordMap.computeIfAbsent(firstChar, k -> new HashSet<>()).add(word.getWord());
+                String w = word.getWord().trim().toLowerCase();
+                if (w.isEmpty()) continue;
+                char firstChar = w.charAt(0);
+                sensitiveWordMap.computeIfAbsent(firstChar, k -> new HashSet<>()).add(w);
+                allSensitiveWords.add(w);
             }
             log.info("加载敏感词数量: {}", words.size());
         } catch (Exception e) {
@@ -105,12 +109,13 @@ public class ContentFilterServiceImpl implements ContentFilterService {
             return false;
         }
 
-        for (int i = 0; i < content.length(); i++) {
-            char c = content.charAt(i);
+        String lowerContent = content.toLowerCase();
+        for (int i = 0; i < lowerContent.length(); i++) {
+            char c = lowerContent.charAt(i);
             Set<String> words = sensitiveWordMap.get(c);
             if (words != null) {
                 for (String word : words) {
-                    if (content.indexOf(word, i) == i) {
+                    if (lowerContent.indexOf(word, i) == i) {
                         return true;
                     }
                 }
@@ -126,19 +131,23 @@ public class ContentFilterServiceImpl implements ContentFilterService {
         }
 
         String result = content;
-        for (Map.Entry<Character, Set<String>> entry : sensitiveWordMap.entrySet()) {
-            for (String word : entry.getValue()) {
-                if (result.contains(word)) {
-                    String replacement = "*".repeat(word.length());
-                    result = result.replace(word, replacement);
-                }
+        String lowerResult = result.toLowerCase();
+        for (String word : allSensitiveWords) {
+            int idx = 0;
+            while ((idx = lowerResult.indexOf(word, idx)) != -1) {
+                String replacement = "*".repeat(word.length());
+                result = result.substring(0, idx) + replacement + result.substring(idx + word.length());
+                lowerResult = result.toLowerCase();
+                idx += word.length();
             }
         }
         return result;
     }
 
+    @Override
     public void refreshSensitiveWords() {
         sensitiveWordMap.clear();
+        allSensitiveWords.clear();
         loadSensitiveWords();
     }
 }

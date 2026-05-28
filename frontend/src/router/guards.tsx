@@ -94,7 +94,7 @@ export function RoleGuard({ children, roles }: RoleGuardProps) {
     return <Navigate to={`/login?redirect=${encodeURIComponent(location.pathname)}`} replace />
   }
 
-  const hasRole = user?.roles.some((role) => roles.includes(role))
+  const hasRole = user?.roles.some((role) => roles.includes(role as RoleCode))
   if (!hasRole) {
     return <Navigate to="/" replace />
   }

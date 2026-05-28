@@ -17,6 +17,7 @@ import com.techcommunity.mapper.PostMapper;
 import com.techcommunity.mapper.UserMapper;
 import com.techcommunity.service.CommentService;
 import com.techcommunity.service.ContentFilterService;
+import com.techcommunity.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,7 @@ public class CommentServiceImpl implements CommentService {
     private final PostMapper postMapper;
     private final UserMapper userMapper;
     private final ContentFilterService contentFilterService;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -61,6 +63,21 @@ public class CommentServiceImpl implements CommentService {
 
         post.setCommentCount(post.getCommentCount() + 1);
         postMapper.updateById(post);
+
+        if (!userId.equals(post.getUserId())) {
+            User commenter = userMapper.selectById(userId);
+            String nickname = commenter != null ? commenter.getNickname() : "用户";
+            String postTitle = post.getTitle() != null && post.getTitle().length() > 20
+                    ? post.getTitle().substring(0, 20) + "..." : post.getTitle();
+            notificationService.sendNotification(
+                    post.getUserId(),
+                    userId,
+                    Constants.NOTIFICATION_TYPE_COMMENT,
+                    "新评论",
+                    nickname + " 评论了你的文章《" + postTitle + "》",
+                    post.getId()
+            );
+        }
 
         return comment.getId();
     }
@@ -115,6 +132,46 @@ public class CommentServiceImpl implements CommentService {
                 .collect(Collectors.toList());
 
         return PageResult.of(responses, total, page, size);
+    }
+
+    @Override
+    public PageResult<CommentResponse> getCommentsByUserId(Long userId, Integer page, Integer size) {
+        Page<Comment> pageResult = commentMapper.selectPage(
+                new Page<>(page, size),
+                new LambdaQueryWrapper<Comment>()
+                        .eq(Comment::getUserId, userId)
+                        .eq(Comment::getStatus, Constants.COMMENT_STATUS_NORMAL)
+                        .orderByDesc(Comment::getCreatedAt)
+        );
+
+        List<CommentResponse> responses = pageResult.getRecords().stream()
+                .map(comment -> {
+                    CommentResponse response = new CommentResponse();
+                    response.setId(comment.getId());
+                    response.setPostId(comment.getPostId());
+                    response.setParentId(comment.getParentId());
+                    response.setContent(comment.getContent());
+                    response.setLikeCount(comment.getLikeCount());
+                    response.setStatus(comment.getStatus());
+                    response.setCreatedAt(comment.getCreatedAt());
+
+                    User author = userMapper.selectById(comment.getUserId());
+                    if (author != null) {
+                        response.setAuthor(buildUserResponse(author));
+                    }
+
+                    if (comment.getReplyToUserId() != null) {
+                        User replyToUser = userMapper.selectById(comment.getReplyToUserId());
+                        if (replyToUser != null) {
+                            response.setReplyToUser(buildUserResponse(replyToUser));
+                        }
+                    }
+
+                    return response;
+                })
+                .collect(Collectors.toList());
+
+        return PageResult.of(responses, pageResult.getTotal(), page, size);
     }
 
     private CommentResponse buildCommentResponse(Comment comment, Map<Long, List<Comment>> childrenMap) {

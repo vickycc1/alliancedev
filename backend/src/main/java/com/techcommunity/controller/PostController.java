@@ -5,11 +5,16 @@ import com.techcommunity.common.PageResult;
 import com.techcommunity.common.Result;
 import com.techcommunity.dto.request.PostCreateRequest;
 import com.techcommunity.dto.response.PostResponse;
+import com.techcommunity.entity.Favorite;
+import com.techcommunity.mapper.FavoriteMapper;
 import com.techcommunity.security.SecurityUtils;
 import com.techcommunity.service.PostService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/posts")
@@ -17,6 +22,22 @@ import org.springframework.web.bind.annotation.*;
 public class PostController {
 
     private final PostService postService;
+    private final FavoriteMapper favoriteMapper;
+
+    @GetMapping("/favorites")
+    public Result<PageResult<PostResponse>> getFavorites(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer size) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        List<Favorite> favorites = favoriteMapper.selectList(
+                new LambdaQueryWrapper<Favorite>()
+                        .eq(Favorite::getUserId, userId)
+                        .orderByDesc(Favorite::getCreatedAt)
+        );
+        List<Long> postIds = favorites.stream().map(Favorite::getPostId).toList();
+        PageResult<PostResponse> result = postService.getPostsByIds(postIds, userId, page, size);
+        return Result.success(result);
+    }
 
     @PostMapping
     @RateLimit(limit = 10, period = 3600, message = "发帖频率超限，请稍后重试")
@@ -57,8 +78,9 @@ public class PostController {
             @RequestParam(required = false) Long authorId,
             @RequestParam(defaultValue = "1") Integer page,
             @RequestParam(defaultValue = "20") Integer size) {
+        Long currentUserId = SecurityUtils.getCurrentUserIdOrNull();
         PageResult<PostResponse> result = postService.getPostList(
-                categoryId, keyword, sortBy, isTop, isEssence, authorId, page, size
+                categoryId, keyword, sortBy, isTop, isEssence, authorId, currentUserId, page, size
         );
         return Result.success(result);
     }

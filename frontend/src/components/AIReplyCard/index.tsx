@@ -5,32 +5,13 @@ import request from '@/api'
 import type { Result } from '@/types/common'
 import type { AiResponse } from '@/types/interaction'
 import { AiResponseStatus } from '@/types/common'
+import MDEditor from '@uiw/react-md-editor'
 
-const { Text, Paragraph, Title } = Typography
+const { Text } = Typography
 
 interface AIReplyCardProps {
   postId: number
   aiRequested: boolean
-}
-
-function MarkdownRenderer({ content }: { content: string }) {
-  const paragraphs = content.split('\n')
-  return (
-    <div style={{ lineHeight: 1.8, fontSize: 14, color: '#1D2129' }}>
-      {paragraphs.map((line, i) => {
-        if (line.startsWith('# ')) return <Title key={i} level={4} style={{ marginTop: 16, marginBottom: 8 }}>{line.slice(2)}</Title>
-        if (line.startsWith('## ')) return <Title key={i} level={5} style={{ marginTop: 12, marginBottom: 6 }}>{line.slice(3)}</Title>
-        if (line.startsWith('- ')) return <div key={i} style={{ paddingLeft: 16, marginBottom: 4 }}>• {line.slice(2)}</div>
-        if (line.startsWith('1. ') || line.startsWith('2. ') || line.startsWith('3. ')) return <div key={i} style={{ paddingLeft: 16, marginBottom: 4 }}>{line}</div>
-        if (line.startsWith('`') && line.endsWith('`')) return <code key={i} style={{ background: '#F2F3F5', padding: '2px 6px', borderRadius: 4, fontSize: 13 }}>{line.slice(1, -1)}</code>
-        if (line.trim() === '') return <div key={i} style={{ height: 8 }} />
-        const boldProcessed = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        const italicProcessed = boldProcessed.replace(/\*(.*?)\*/g, '<em>$1</em>')
-        const codeProcessed = italicProcessed.replace(/`(.*?)`/g, '<code style="background:#F2F3F5;padding:1px 4px;border-radius:3px;font-size:13px">$1</code>')
-        return <p key={i} style={{ marginBottom: 6 }} dangerouslySetInnerHTML={{ __html: codeProcessed }} />
-      })}
-    </div>
-  )
 }
 
 function TypewriterText({ content, speed = 30 }: { content: string; speed?: number }) {
@@ -209,7 +190,7 @@ export default function AIReplyCard({ postId, aiRequested }: AIReplyCardProps) {
           {showTypewriter ? (
             <TypewriterText content={aiResponse.content} speed={20} />
           ) : (
-            <MarkdownRenderer content={aiResponse.content} />
+            <MDEditor.Markdown source={aiResponse.content} />
           )}
         </div>
       )}

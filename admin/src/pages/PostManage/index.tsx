@@ -126,9 +126,14 @@ export default function PostManage() {
       content: `确定要删除帖子 "${record.title}" 吗？此操作为逻辑删除。`,
       okButtonProps: { danger: true },
       onOk: async () => {
-        await deletePost(record.id)
-        message.success('删除成功')
-        fetchData()
+        try {
+          await deletePost(record.id)
+          message.success('删除成功')
+          setData((prev) => prev.filter((item) => item.id !== record.id))
+          setTotal((prev) => prev - 1)
+        } catch {
+          message.error('删除失败，请稍后重试')
+        }
       },
     })
   }

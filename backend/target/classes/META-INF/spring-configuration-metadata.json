@@ -1,0 +1,117 @@
+{
+  "groups": [
+    {
+      "name": "ai",
+      "type": "com.techcommunity.config.AiConfig",
+      "sourceType": "com.techcommunity.config.AiConfig"
+    },
+    {
+      "name": "cas",
+      "type": "com.techcommunity.config.CasConfig",
+      "sourceType": "com.techcommunity.config.CasConfig"
+    },
+    {
+      "name": "file",
+      "type": "com.techcommunity.config.FileConfig",
+      "sourceType": "com.techcommunity.config.FileConfig"
+    },
+    {
+      "name": "jwt",
+      "type": "com.techcommunity.config.JwtConfig",
+      "sourceType": "com.techcommunity.config.JwtConfig"
+    }
+  ],
+  "properties": [
+    {
+      "name": "ai.api-key",
+      "type": "java.lang.String",
+      "sourceType": "com.techcommunity.config.AiConfig"
+    },
+    {
+      "name": "ai.base-url",
+      "type": "java.lang.String",
+      "sourceType": "com.techcommunity.config.AiConfig"
+    },
+    {
+      "name": "ai.enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.techcommunity.config.AiConfig"
+    },
+    {
+      "name": "ai.max-tokens",
+      "type": "java.lang.Integer",
+      "sourceType": "com.techcommunity.config.AiConfig"
+    },
+    {
+      "name": "ai.model",
+      "type": "java.lang.String",
+      "sourceType": "com.techcommunity.config.AiConfig"
+    },
+    {
+      "name": "ai.temperature",
+      "type": "java.lang.Double",
+      "sourceType": "com.techcommunity.config.AiConfig"
+    },
+    {
+      "name": "ai.timeout",
+      "type": "java.lang.Integer",
+      "sourceType": "com.techcommunity.config.AiConfig"
+    },
+    {
+      "name": "cas.client-service",
+      "type": "java.lang.String",
+      "sourceType": "com.techcommunity.config.CasConfig"
+    },
+    {
+      "name": "cas.enabled",
+      "type": "java.lang.Boolean",
+      "sourceType": "com.techcommunity.config.CasConfig"
+    },
+    {
+      "name": "cas.server-url",
+      "type": "java.lang.String",
+      "sourceType": "com.techcommunity.config.CasConfig"
+    },
+    {
+      "name": "file.avatar-path",
+      "type": "java.lang.String",
+      "sourceType": "com.techcommunity.config.FileConfig"
+    },
+    {
+      "name": "file.max-avatar-size",
+      "type": "java.lang.Long",
+      "sourceType": "com.techcommunity.config.FileConfig"
+    },
+    {
+      "name": "file.upload-path",
+      "type": "java.lang.String",
+      "sourceType": "com.techcommunity.config.FileConfig"
+    },
+    {
+      "name": "jwt.expiration",
+      "type": "java.lang.Long",
+      "sourceType": "com.techcommunity.config.JwtConfig"
+    },
+    {
+      "name": "jwt.header",
+      "type": "java.lang.String",
+      "sourceType": "com.techcommunity.config.JwtConfig"
+    },
+    {
+      "name": "jwt.prefix",
+      "type": "java.lang.String",
+      "sourceType": "com.techcommunity.config.JwtConfig"
+    },
+    {
+      "name": "jwt.refresh-expiration",
+      "type": "java.lang.Long",
+      "sourceType": "com.techcommunity.config.JwtConfig"
+    },
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "sourceType": "com.techcommunity.config.JwtConfig"
+    }
+  ],
+  "hints": []
+}

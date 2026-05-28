@@ -4,12 +4,12 @@ import { BrowserRouter } from 'react-router-dom'
 import { ConfigProvider } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import App from './App'
-import request from './api'
-import { setupMockInterceptor } from './mock/handlers'
+// import request from './api'
+// import { setupMockInterceptor } from './mock/handlers'
 
-if (import.meta.env.DEV) {
-  setupMockInterceptor(request)
-}
+// if (import.meta.env.DEV && import.meta.env.VITE_MOCK === 'true') {
+//   setupMockInterceptor(request)
+// }
 
 const themeConfig = {
   token: {

@@ -1,7 +1,6 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { Avatar, Upload, message, Modal } from 'antd'
 import { UserOutlined, UploadOutlined, PlusOutlined } from '@ant-design/icons'
-import type { UploadFile } from 'antd/es/upload/interface'
 import request from '@/api'
 import type { Result } from '@/types/common'
 

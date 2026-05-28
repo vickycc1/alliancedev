@@ -1,5 +1,3 @@
-import type { UserStatus, RoleCode } from './common'
-
 export interface User {
   id: number
   username: string
@@ -9,8 +7,8 @@ export interface User {
   phone?: string
   bio?: string
   casId?: string
-  status: UserStatus
-  roles: RoleCode[]
+  status: number
+  roles: string[]
   createdAt: string
   updatedAt: string
   lastLoginAt?: string
@@ -22,7 +20,7 @@ export interface UserPublic {
   nickname: string
   avatar: string
   bio?: string
-  status: UserStatus
+  status: number
 }
 
 export interface LoginRequest {
@@ -33,8 +31,8 @@ export interface LoginRequest {
 export interface RegisterRequest {
   username: string
   password: string
-  email: string
-  nickname: string
+  email?: string
+  nickname?: string
 }
 
 export interface LoginResponse {

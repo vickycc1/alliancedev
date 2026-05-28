@@ -9,6 +9,8 @@ export default function Essence() {
       titleIcon={<StarOutlined style={{ color: '#FAAD14', fontSize: 24 }} />}
       defaultSortBy={SortBy.LATEST}
       defaultIsEssence
+      hideCategoryTabs
+      hideSortSelect
     />
   )
 }

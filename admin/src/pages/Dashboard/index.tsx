@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Row, Col, Card, Statistic, Typography, Space, Tag, Spin } from 'antd'
 import {
   UserOutlined,
@@ -9,6 +10,7 @@ import {
   CheckCircleOutlined,
   ArrowUpOutlined,
 } from '@ant-design/icons'
+import { Line } from '@ant-design/charts'
 import { useAuthStore } from '@/store/useAuthStore'
 import { getAdminStats } from '@/api/admin'
 import type { AdminStats } from '@/types/admin'
@@ -17,6 +19,7 @@ const { Title, Text } = Typography
 
 export default function Dashboard() {
   const user = useAuthStore((s) => s.user)
+  const navigate = useNavigate()
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -121,12 +124,29 @@ export default function Dashboard() {
             <Card
               title="近7天活跃趋势"
               style={{ borderRadius: 12 }}
-              styles={{ body: { minHeight: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' } }}
+              styles={{ body: { minHeight: 320 } }}
             >
               {stats?.activeTrend && stats.activeTrend.length > 0 ? (
-                <Text type="secondary">趋势图渲染区域（接入 @ant-design/charts 后展示）</Text>
+                <Line
+                  data={stats.activeTrend.flatMap((item) => [
+                    { date: item.date, value: item.users, type: '新增用户' },
+                    { date: item.date, value: item.posts, type: '新增帖子' },
+                  ])}
+                  xField="date"
+                  yField="value"
+                  colorField="type"
+                  smooth
+                  point={{ shapeSize: 4 }}
+                  style={{ height: 280 }}
+                  color={['#4F46E5', '#059669']}
+                  axisX={{ labelAutoRotate: false }}
+                  axisY={{ title: false }}
+                  legend={{ color: { position: 'top' } }}
+                />
               ) : (
-                <Text type="secondary">暂无趋势数据</Text>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 280 }}>
+                  <Text type="secondary">暂无趋势数据</Text>
+                </div>
               )}
             </Card>
           </Col>
@@ -145,6 +165,7 @@ export default function Dashboard() {
                 ].map((item) => (
                   <div
                     key={item.href}
+                    onClick={() => navigate(item.href)}
                     style={{
                       display: 'flex',
                       justifyContent: 'space-between',

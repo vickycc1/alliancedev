@@ -8,6 +8,8 @@ export default function Hot() {
       title="热门帖子"
       titleIcon={<FireOutlined style={{ color: '#F5222D', fontSize: 24 }} />}
       defaultSortBy={SortBy.HOTTEST}
+      hideCategoryTabs
+      hideSortSelect
     />
   )
 }

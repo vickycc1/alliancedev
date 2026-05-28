@@ -25,11 +25,17 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public List<CategoryTreeResponse> getTree() {
-        List<Category> categories = categoryMapper.selectList(
-                new LambdaQueryWrapper<Category>()
-                        .eq(Category::getStatus, 1)
-                        .orderByAsc(Category::getSortOrder)
-        );
+        return getTree(false);
+    }
+
+    @Override
+    public List<CategoryTreeResponse> getTree(boolean includeDisabled) {
+        LambdaQueryWrapper<Category> wrapper = new LambdaQueryWrapper<Category>()
+                .orderByAsc(Category::getSortOrder);
+        if (!includeDisabled) {
+            wrapper.eq(Category::getStatus, 1);
+        }
+        List<Category> categories = categoryMapper.selectList(wrapper);
         return buildTree(categories, 0L);
     }
 
@@ -75,6 +81,9 @@ public class CategoryServiceImpl implements CategoryService {
         }
         if (request.getSortOrder() != null) {
             category.setSortOrder(request.getSortOrder());
+        }
+        if (request.getStatus() != null) {
+            category.setStatus(request.getStatus());
         }
         categoryMapper.updateById(category);
     }

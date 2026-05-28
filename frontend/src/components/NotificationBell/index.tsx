@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Badge, Popover, List, Avatar, Button, Typography, Space, Empty, Spin } from 'antd'
+import { Badge, Popover, Avatar, Button, Typography, Empty, Spin } from 'antd'
 import { BellOutlined, UserOutlined, CheckOutlined } from '@ant-design/icons'
 import { useNotificationStore } from '@/store/useNotificationStore'
 import { NotificationType } from '@/types/common'

@@ -6,6 +6,7 @@ import com.techcommunity.dto.request.ReportCreateRequest;
 import com.techcommunity.entity.*;
 import com.techcommunity.mapper.*;
 import com.techcommunity.service.InteractionService;
+import com.techcommunity.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +21,8 @@ public class InteractionServiceImpl implements InteractionService {
     private final ReportMapper reportMapper;
     private final PostMapper postMapper;
     private final CommentMapper commentMapper;
+    private final UserMapper userMapper;
+    private final NotificationService notificationService;
 
     @Override
     @Transactional
@@ -42,6 +45,22 @@ public class InteractionServiceImpl implements InteractionService {
             like.setTargetType(targetType);
             likeMapper.insert(like);
             updateLikeCount(targetId, targetType, 1);
+
+            Long receiverId = getTargetOwnerId(targetId, targetType);
+            if (receiverId != null && !receiverId.equals(userId)) {
+                User liker = userMapper.selectById(userId);
+                String nickname = liker != null ? liker.getNickname() : "用户";
+                String targetDesc = targetType == Constants.TARGET_TYPE_POST ? "文章" : "评论";
+                notificationService.sendNotification(
+                        receiverId,
+                        userId,
+                        Constants.NOTIFICATION_TYPE_LIKE,
+                        "新点赞",
+                        nickname + " 赞了你的" + targetDesc,
+                        targetId
+                );
+            }
+
             return true;
         }
     }
@@ -65,6 +84,23 @@ public class InteractionServiceImpl implements InteractionService {
             favorite.setPostId(postId);
             favoriteMapper.insert(favorite);
             updateFavoriteCount(postId, 1);
+
+            Post post = postMapper.selectById(postId);
+            if (post != null && !userId.equals(post.getUserId())) {
+                User favoriter = userMapper.selectById(userId);
+                String nickname = favoriter != null ? favoriter.getNickname() : "用户";
+                String postTitle = post.getTitle() != null && post.getTitle().length() > 20
+                        ? post.getTitle().substring(0, 20) + "..." : post.getTitle();
+                notificationService.sendNotification(
+                        post.getUserId(),
+                        userId,
+                        Constants.NOTIFICATION_TYPE_FAVORITE,
+                        "新收藏",
+                        nickname + " 收藏了你的文章《" + postTitle + "》",
+                        postId
+                );
+            }
+
             return true;
         }
     }
@@ -89,7 +125,7 @@ public class InteractionServiceImpl implements InteractionService {
     @Transactional
     public Long createReport(ReportCreateRequest request, Long userId) {
         Report report = new Report();
-        report.setUserId(userId);
+        report.setReporterId(userId);
         report.setTargetId(request.getTargetId());
         report.setTargetType(request.getTargetType());
         report.setReason(request.getReason());
@@ -139,5 +175,16 @@ public class InteractionServiceImpl implements InteractionService {
             post.setFavoriteCount(Math.max(0, post.getFavoriteCount() + delta));
             postMapper.updateById(post);
         }
+    }
+
+    private Long getTargetOwnerId(Long targetId, Integer targetType) {
+        if (targetType == Constants.TARGET_TYPE_POST) {
+            Post post = postMapper.selectById(targetId);
+            return post != null ? post.getUserId() : null;
+        } else if (targetType == Constants.TARGET_TYPE_COMMENT) {
+            Comment comment = commentMapper.selectById(targetId);
+            return comment != null ? comment.getUserId() : null;
+        }
+        return null;
     }
 }

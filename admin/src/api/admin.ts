@@ -29,27 +29,27 @@ export function getAdminUserDetail(id: number) {
 }
 
 export function updateUserStatus(id: number, status: number) {
-  return request.put<Result<void>>(`/admin/users/${id}/status`, { status })
+  return request.put<Result<void>>(`/admin/users/${id}/status`, null, { params: { status } })
 }
 
-export function updateUserRoles(id: number, roles: string[]) {
-  return request.put<Result<void>>(`/admin/users/${id}/roles`, { roles })
+export function updateUserRoles(id: number, roleCodes: string[]) {
+  return request.put<Result<void>>(`/admin/users/${id}/roles`, roleCodes)
 }
 
 export function getCategoryTree() {
-  return request.get<Result<CategoryTreeNode[]>>('/admin/categories/tree')
+  return request.get<Result<CategoryTreeNode[]>>('/categories/tree', { params: { includeDisabled: true } })
 }
 
 export function createCategory(data: AdminCategoryCreate) {
-  return request.post<Result<void>>('/admin/categories', data)
+  return request.post<Result<number>>('/categories', data)
 }
 
 export function updateCategory(id: number, data: AdminCategoryUpdate) {
-  return request.put<Result<void>>(`/admin/categories/${id}`, data)
+  return request.put<Result<void>>(`/categories/${id}`, data)
 }
 
 export function deleteCategory(id: number) {
-  return request.delete<Result<void>>(`/admin/categories/${id}`)
+  return request.delete<Result<void>>(`/categories/${id}`)
 }
 
 export function getAdminPosts(params: AdminPostQuery) {
@@ -57,11 +57,11 @@ export function getAdminPosts(params: AdminPostQuery) {
 }
 
 export function togglePostTop(id: number, isTop: boolean) {
-  return request.put<Result<void>>(`/admin/posts/${id}/top`, { isTop })
+  return request.put<Result<void>>(`/posts/${id}/top`, null, { params: { isTop: isTop ? 1 : 0 } })
 }
 
 export function togglePostEssence(id: number, isEssence: boolean) {
-  return request.put<Result<void>>(`/admin/posts/${id}/essence`, { isEssence })
+  return request.put<Result<void>>(`/posts/${id}/essence`, null, { params: { isEssence: isEssence ? 1 : 0 } })
 }
 
 export function blockPost(id: number) {

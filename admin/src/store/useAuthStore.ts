@@ -42,7 +42,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   fetchProfile: async () => {
     set({ loading: true })
     try {
-      const { data } = await request.get<Result<User>>('/user/profile')
+      const { data } = await request.get<Result<User>>('/auth/me')
       if (data.data) {
         set({ user: data.data, isAuthenticated: true })
       }

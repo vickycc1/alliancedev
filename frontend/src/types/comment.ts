@@ -1,21 +1,18 @@
-import type { CommentStatus } from './common'
-import type { UserPublic } from './user'
+import type { User } from './user'
 
 export interface Comment {
   id: number
   postId: number
-  userId: number
   parentId: number
-  replyToUserId?: number
   content: string
   likeCount: number
-  status: CommentStatus
+  status: number
   createdAt: string
 }
 
 export interface CommentWithUser extends Comment {
-  author: UserPublic
-  replyToUser?: UserPublic
+  author: User
+  replyToUser?: User
   liked: boolean
   children?: CommentWithUser[]
 }

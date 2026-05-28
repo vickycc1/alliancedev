@@ -1,7 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { message } from 'antd'
 import type { Result } from '@/types/common'
-import { setupMockInterceptor } from '@/mock/handlers'
+// import { setupMockInterceptor } from '@/mock/handlers'
 
 const TOKEN_KEY = 'admin_token'
 const REFRESH_TOKEN_KEY = 'admin_refresh_token'
@@ -15,7 +15,7 @@ const request = axios.create({
   },
 })
 
-setupMockInterceptor(request)
+// setupMockInterceptor(request)
 
 let isRefreshing = false
 let pendingRequests: Array<(token: string) => void> = []

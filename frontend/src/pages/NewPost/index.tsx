@@ -4,7 +4,6 @@ import { Card, Form, Input, Button, Switch, message, Typography } from 'antd'
 import { ArrowLeftOutlined, SendOutlined } from '@ant-design/icons'
 import request from '@/api'
 import type { Result } from '@/types/common'
-import type { PostListItem } from '@/types/post'
 import CategoryCascader from '@/components/CategoryCascader'
 import RichEditor from '@/components/RichEditor'
 
@@ -24,7 +23,7 @@ export default function NewPost() {
     }
     setLoading(true)
     try {
-      const { data } = await request.post<Result<PostListItem>>('/posts', {
+      const { data } = await request.post<Result<number>>('/posts', {
         categoryId: values.categoryId,
         title: values.title,
         content,
@@ -32,7 +31,7 @@ export default function NewPost() {
       })
       if (data.data) {
         message.success('发布成功')
-        navigate(`/post/${data.data.id}`)
+        navigate(`/post/${data.data}`)
       }
     } catch {
       message.error('发布失败')

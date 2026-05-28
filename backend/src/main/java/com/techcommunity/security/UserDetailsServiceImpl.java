@@ -41,7 +41,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         List<SimpleGrantedAuthority> authorities = userRoles.stream()
                 .map(ur -> roleMapper.selectById(ur.getRoleId()))
                 .filter(role -> role != null)
-                .map(role -> new SimpleGrantedAuthority(role.getRoleCode()))
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getRoleCode()))
                 .collect(Collectors.toList());
 
         return new org.springframework.security.core.userdetails.User(

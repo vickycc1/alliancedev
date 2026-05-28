@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Typography, Tabs, Avatar, Button, Empty, Spin, Space, Tag, Card,
+  Typography, Tabs, Avatar, Button, Empty, Spin, Tag, Card,
 } from 'antd'
 import { UserOutlined, CheckOutlined } from '@ant-design/icons'
 import { useNotificationStore } from '@/store/useNotificationStore'

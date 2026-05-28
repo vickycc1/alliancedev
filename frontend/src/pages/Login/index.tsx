@@ -108,17 +108,20 @@ export default function Login() {
           </Form.Item>
         </Form>
 
-        <Divider style={{ color: '#8F959E', fontSize: 12 }}>其他登录方式</Divider>
-
-        <Button
-          icon={<SafetyCertificateOutlined />}
-          block
-          size="large"
-          onClick={handleCasLogin}
-          style={{ height: 40 }}
-        >
-          CAS 统一身份认证登录
-        </Button>
+        {import.meta.env.VITE_CAS_ENABLED === 'true' && (
+          <>
+            <Divider style={{ color: '#8F959E', fontSize: 12 }}>其他登录方式</Divider>
+            <Button
+              icon={<SafetyCertificateOutlined />}
+              block
+              size="large"
+              onClick={handleCasLogin}
+              style={{ height: 40 }}
+            >
+              CAS 统一身份认证登录
+            </Button>
+          </>
+        )}
 
         <div style={{ textAlign: 'center', marginTop: 24 }}>
           <Text style={{ color: '#8F959E' }}>

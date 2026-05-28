@@ -25,7 +25,7 @@ export default function ChangePasswordModal({ open, onClose }: ChangePasswordMod
       useAuthStore.getState().logout()
       window.location.href = '/login'
     } catch {
-      message.error('密码修改失败')
+      message.warning('该功能暂未开放，请联系管理员修改密码')
     } finally {
       setLoading(false)
     }

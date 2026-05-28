@@ -11,6 +11,8 @@ import {
   message,
   Dropdown,
   Modal,
+  Radio,
+  Input,
 } from 'antd'
 import {
   EyeOutlined,
@@ -25,7 +27,7 @@ import {
 } from '@ant-design/icons'
 import request from '@/api'
 import type { Result } from '@/types/common'
-import type { PostDetail } from '@/types/post'
+import type { PostResponse } from '@/types/post'
 import { useAuthStore } from '@/store/useAuthStore'
 import { RoleCode, TargetType } from '@/types/common'
 import LikeButton from '@/components/LikeButton'
@@ -34,13 +36,15 @@ import ShareButton from '@/components/ShareButton'
 import CommentList from '@/components/CommentList'
 import AIReplyCard from '@/components/AIReplyCard'
 
-const { Title, Text, Paragraph } = Typography
+import MDEditor from '@uiw/react-md-editor'
+
+const { Title, Text } = Typography
 
 export default function Post() {
   const { id } = useParams()
   const navigate = useNavigate()
   const currentUser = useAuthStore((s) => s.user)
-  const [post, setPost] = useState<PostDetail | null>(null)
+  const [post, setPost] = useState<PostResponse | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -50,7 +54,7 @@ export default function Post() {
   const fetchPost = async () => {
     setLoading(true)
     try {
-      const { data } = await request.get<Result<PostDetail>>(`/posts/${id}`)
+      const { data } = await request.get<Result<PostResponse>>(`/posts/${id}`)
       if (data.data) setPost(data.data)
     } catch {
       message.error('获取帖子失败')
@@ -71,21 +75,30 @@ export default function Post() {
     if (post) setPost({ ...post, commentCount: count })
   }
 
+  const [reportVisible, setReportVisible] = useState(false)
+  const [reportReason, setReportReason] = useState('')
+  const [reportLoading, setReportLoading] = useState(false)
+
   const handleReport = () => {
-    Modal.confirm({
-      title: '举报帖子',
-      content: '确定要举报这篇帖子吗？',
-      okText: '确定举报',
-      cancelText: '取消',
-      onOk: async () => {
-        try {
-          await request.post('/interaction/report', { targetId: post?.id, targetType: TargetType.POST, reason: '内容违规' })
-          message.success('举报成功，管理员将尽快处理')
-        } catch {
-          message.error('举报失败')
-        }
-      },
-    })
+    setReportReason('')
+    setReportVisible(true)
+  }
+
+  const submitReport = async () => {
+    if (!reportReason.trim()) {
+      message.warning('请选择或输入举报原因')
+      return
+    }
+    setReportLoading(true)
+    try {
+      await request.post('/interaction/report', { targetId: post?.id, targetType: TargetType.POST, reason: reportReason })
+      message.success('举报成功，管理员将尽快处理')
+      setReportVisible(false)
+    } catch {
+      message.error('举报失败')
+    } finally {
+      setReportLoading(false)
+    }
   }
 
   const handleDelete = () => {
@@ -115,7 +128,7 @@ export default function Post() {
     return <div style={{ textAlign: 'center', padding: 80 }}><Text type="secondary">帖子不存在</Text></div>
   }
 
-  const isAuthor = currentUser && currentUser.id === post.userId
+  const isAuthor = currentUser && currentUser.id === post.author.id
   const isAdmin = currentUser?.roles.includes(RoleCode.ADMIN)
 
   return (
@@ -159,16 +172,8 @@ export default function Post() {
 
         <Divider style={{ margin: '0 0 20px' }} />
 
-        <div style={{ lineHeight: 1.8, fontSize: 15, color: '#1D2129' }}>
-          {post.content.split('\n').map((paragraph, i) => {
-            if (paragraph.startsWith('# ')) return <Title key={i} level={2} style={{ marginTop: 24 }}>{paragraph.slice(2)}</Title>
-            if (paragraph.startsWith('## ')) return <Title key={i} level={3} style={{ marginTop: 20 }}>{paragraph.slice(3)}</Title>
-            if (paragraph.startsWith('### ')) return <Title key={i} level={4} style={{ marginTop: 16 }}>{paragraph.slice(4)}</Title>
-            if (paragraph.startsWith('```')) return null
-            if (paragraph.startsWith('- ')) return <div key={i} style={{ paddingLeft: 16 }}>• {paragraph.slice(2)}</div>
-            if (paragraph.trim() === '') return <div key={i} style={{ height: 12 }} />
-            return <Paragraph key={i} style={{ marginBottom: 8 }}>{paragraph}</Paragraph>
-          })}
+        <div style={{ lineHeight: 1.8, fontSize: 15, color: '#1D2129' }} data-color-mode="light">
+          <MDEditor.Markdown source={post.content} />
         </div>
 
         <Divider style={{ margin: '24px 0 16px' }} />
@@ -214,6 +219,38 @@ export default function Post() {
           onCommentCountChange={handleCommentCountChange}
         />
       </Card>
+
+      <Modal
+        title="举报帖子"
+        open={reportVisible}
+        onOk={submitReport}
+        onCancel={() => setReportVisible(false)}
+        confirmLoading={reportLoading}
+        okText="提交举报"
+        okButtonProps={{ danger: true }}
+      >
+        <Radio.Group
+          onChange={(e) => setReportReason(e.target.value)}
+          value={reportReason}
+          style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}
+        >
+          <Radio value="垃圾广告">垃圾广告</Radio>
+          <Radio value="虚假信息">虚假信息</Radio>
+          <Radio value="违法违规">违法违规</Radio>
+          <Radio value="抄袭侵权">抄袭侵权</Radio>
+          <Radio value="人身攻击">人身攻击</Radio>
+          <Radio value="内容违规">内容违规</Radio>
+          <Radio value="其他">其他</Radio>
+        </Radio.Group>
+        {reportReason === '其他' && (
+          <Input.TextArea
+            rows={3}
+            placeholder="请输入举报原因"
+            style={{ marginTop: 12 }}
+            onChange={(e) => setReportReason(e.target.value ? `其他：${e.target.value}` : '其他')}
+          />
+        )}
+      </Modal>
     </div>
   )
 }

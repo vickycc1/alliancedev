@@ -23,6 +23,9 @@ interface PostListPageProps {
   defaultSortBy?: SortBy
   defaultIsEssence?: boolean
   defaultCategoryId?: number
+  onCategoryChange?: (categoryId: number) => void
+  hideCategoryTabs?: boolean
+  hideSortSelect?: boolean
 }
 
 export default function PostListPage({
@@ -31,6 +34,9 @@ export default function PostListPage({
   defaultSortBy = SortBy.LATEST,
   defaultIsEssence = false,
   defaultCategoryId = 0,
+  onCategoryChange,
+  hideCategoryTabs = false,
+  hideSortSelect = false,
 }: PostListPageProps) {
   const [posts, setPosts] = useState<PostListItem[]>([])
   const [total, setTotal] = useState(0)
@@ -51,7 +57,7 @@ export default function PostListPage({
   }, [defaultCategoryId, defaultSortBy, defaultIsEssence])
 
   useEffect(() => {
-    request.get<Result<CategoryTree[]>>('/categories').then(({ data }) => {
+    request.get<Result<CategoryTree[]>>('/categories/tree').then(({ data }) => {
       if (data.data) setCategories(data.data)
     })
   }, [])
@@ -93,6 +99,7 @@ export default function PostListPage({
   const handleCategoryChange = (categoryId: number) => {
     setActiveCategory(categoryId)
     setPage(1)
+    onCategoryChange?.(categoryId)
   }
 
   const handleSortChange = (value: SortBy) => {
@@ -138,21 +145,23 @@ export default function PostListPage({
         </div>
       )}
 
-      <div style={{
-        background: '#FFFFFF',
-        borderRadius: 8,
-        padding: '16px 24px',
-        marginBottom: 16,
-        border: '1px solid #E5E6EB',
-      }}>
-        <Tabs
-          activeKey={String(resolvedActiveCategory)}
-          onChange={(key) => handleCategoryChange(Number(key))}
-          items={categoryTabs}
-          size="small"
-          style={{ marginBottom: 0 }}
-        />
-      </div>
+      {!hideCategoryTabs && (
+        <div style={{
+          background: '#FFFFFF',
+          borderRadius: 8,
+          padding: '16px 24px',
+          marginBottom: 16,
+          border: '1px solid #E5E6EB',
+        }}>
+          <Tabs
+            activeKey={String(resolvedActiveCategory)}
+            onChange={(key) => handleCategoryChange(Number(key))}
+            items={categoryTabs}
+            size="small"
+            style={{ marginBottom: 0 }}
+          />
+        </div>
+      )}
 
       <div style={{
         display: 'flex',
@@ -161,12 +170,14 @@ export default function PostListPage({
         alignItems: 'center',
         flexWrap: 'wrap',
       }}>
-        <Select
-          value={sortBy}
-          onChange={handleSortChange}
-          options={sortOptions}
-          style={{ width: 120 }}
-        />
+        {!hideSortSelect && (
+          <Select
+            value={sortBy}
+            onChange={handleSortChange}
+            options={sortOptions}
+            style={{ width: 120 }}
+          />
+        )}
         <Search
           placeholder="搜索帖子"
           allowClear

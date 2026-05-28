@@ -9,6 +9,8 @@ public interface CategoryService {
 
     List<CategoryTreeResponse> getTree();
 
+    List<CategoryTreeResponse> getTree(boolean includeDisabled);
+
     CategoryTreeResponse getById(Long id);
 
     Long create(CategoryTreeResponse request);

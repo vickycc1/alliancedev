@@ -5,12 +5,14 @@ import { useAuthStore } from '@/store/useAuthStore'
 import request from '@/api'
 import type { Result } from '@/types/common'
 import type { CommentWithUser } from '@/types/comment'
+import type { User } from '@/types/user'
 
 const { TextArea } = Input
 
 interface CommentInputProps {
   postId: number
   parentId?: number
+  replyToUserId?: number
   replyToUser?: string
   placeholder?: string
   onSuccess?: (comment: CommentWithUser) => void
@@ -19,7 +21,8 @@ interface CommentInputProps {
 
 export default function CommentInput({
   postId,
-  parentId = 0,
+  parentId,
+  replyToUserId,
   replyToUser,
   placeholder,
   onSuccess,
@@ -42,14 +45,34 @@ export default function CommentInput({
     try {
       const body: Record<string, unknown> = { content, postId }
       if (parentId) body.parentId = parentId
-      const { data } = await request.post<Result<CommentWithUser>>(
-        `/posts/${postId}/comments`,
-        body,
-      )
+      if (replyToUserId) body.replyToUserId = replyToUserId
+      const { data } = await request.post<Result<number>>('/comments', body)
       if (data.data) {
         message.success('评论成功')
         setContent('')
-        onSuccess?.(data.data)
+        const optimisticComment: CommentWithUser = {
+          id: data.data,
+          postId,
+          parentId: parentId || 0,
+          content,
+          likeCount: 0,
+          status: 1,
+          createdAt: new Date().toISOString(),
+          author: {
+            id: currentUser!.id,
+            username: currentUser!.username,
+            nickname: currentUser!.nickname,
+            avatar: currentUser!.avatar,
+            bio: currentUser!.bio,
+            status: currentUser!.status,
+            roles: currentUser!.roles,
+            createdAt: currentUser!.createdAt,
+            updatedAt: currentUser!.updatedAt,
+          },
+          liked: false,
+          ...(replyToUserId ? { replyToUser: { id: replyToUserId, nickname: replyToUser, username: '', avatar: '', status: 1, roles: [], createdAt: '', updatedAt: '' } as User } : {}),
+        }
+        onSuccess?.(optimisticComment)
       }
     } catch {
       message.error('评论失败')

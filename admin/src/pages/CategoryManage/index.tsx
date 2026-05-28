@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import {
   Card, Tree, Button, Space, Modal, Form, Input, InputNumber, Select, Tag, Typography, message, Empty, Spin,
 } from 'antd'
@@ -47,6 +47,7 @@ export default function CategoryManage() {
   const [treeData, setTreeData] = useState<CategoryTreeNode[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedNode, setSelectedNode] = useState<CategoryTreeNode | null>(null)
+  const selectedIdRef = useRef<number | null>(null)
 
   const [modalVisible, setModalVisible] = useState(false)
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
@@ -57,7 +58,13 @@ export default function CategoryManage() {
     setLoading(true)
     try {
       const { data: res } = await getCategoryTree()
-      if (res.data) setTreeData(res.data)
+      if (res.data) {
+        setTreeData(res.data)
+        if (selectedIdRef.current) {
+          const updated = flattenCategories(res.data).find((c) => c.id === selectedIdRef.current)
+          setSelectedNode(updated || null)
+        }
+      }
     } catch {
       setTreeData([])
     } finally {
@@ -108,6 +115,7 @@ export default function CategoryManage() {
       onOk: async () => {
         await deleteCategory(selectedNode.id)
         message.success('删除成功')
+        selectedIdRef.current = null
         setSelectedNode(null)
         fetchTree()
       },
@@ -135,6 +143,7 @@ export default function CategoryManage() {
 
   const handleSelect = (_: unknown, info: { node: { key: React.Key } }) => {
     const node = flatList.find((c) => c.id === Number(info.node.key))
+    selectedIdRef.current = node?.id ?? null
     setSelectedNode(node || null)
   }
 

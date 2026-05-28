@@ -17,7 +17,9 @@ interface UserContentTabsProps {
 export default function UserContentTabs({ userId }: UserContentTabsProps) {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('posts')
-  const [loading, setLoading] = useState(false)
+  const [postsLoading, setPostsLoading] = useState(false)
+  const [commentsLoading, setCommentsLoading] = useState(false)
+  const [favoritesLoading, setFavoritesLoading] = useState(false)
 
   const [posts, setPosts] = useState<PostListItem[]>([])
   const [postsTotal, setPostsTotal] = useState(0)
@@ -34,10 +36,10 @@ export default function UserContentTabs({ userId }: UserContentTabsProps) {
   const pageSize = 10
 
   const fetchPosts = useCallback(async (page: number) => {
-    setLoading(true)
+    setPostsLoading(true)
     try {
-      const { data } = await request.get<Result<PageResult<PostListItem>>>('/user/posts', {
-        params: { userId, page, size: pageSize },
+      const { data } = await request.get<Result<PageResult<PostListItem>>>('/posts', {
+        params: { authorId: userId, page, size: pageSize },
       })
       if (data.data) {
         setPosts(data.data.list)
@@ -47,12 +49,12 @@ export default function UserContentTabs({ userId }: UserContentTabsProps) {
     } catch {
       setPosts([])
     } finally {
-      setLoading(false)
+      setPostsLoading(false)
     }
   }, [userId])
 
   const fetchComments = useCallback(async (page: number) => {
-    setLoading(true)
+    setCommentsLoading(true)
     try {
       const { data } = await request.get<Result<PageResult<CommentWithUser>>>('/user/comments', {
         params: { userId, page, size: pageSize },
@@ -64,13 +66,14 @@ export default function UserContentTabs({ userId }: UserContentTabsProps) {
       }
     } catch {
       setComments([])
+      setCommentsTotal(0)
     } finally {
-      setLoading(false)
+      setCommentsLoading(false)
     }
   }, [userId])
 
   const fetchFavorites = useCallback(async (page: number) => {
-    setLoading(true)
+    setFavoritesLoading(true)
     try {
       const { data } = await request.get<Result<PageResult<PostListItem>>>('/user/favorites', {
         params: { userId, page, size: pageSize },
@@ -82,16 +85,23 @@ export default function UserContentTabs({ userId }: UserContentTabsProps) {
       }
     } catch {
       setFavorites([])
+      setFavoritesTotal(0)
     } finally {
-      setLoading(false)
+      setFavoritesLoading(false)
     }
   }, [userId])
+
+  useEffect(() => {
+    fetchPosts(postsPage)
+    fetchComments(commentsPage)
+    fetchFavorites(favoritesPage)
+  }, [fetchPosts, fetchComments, fetchFavorites])
 
   useEffect(() => {
     if (activeTab === 'posts') fetchPosts(postsPage)
     else if (activeTab === 'comments') fetchComments(commentsPage)
     else if (activeTab === 'favorites') fetchFavorites(favoritesPage)
-  }, [activeTab, fetchPosts, fetchComments, fetchFavorites, postsPage, commentsPage, favoritesPage])
+  }, [activeTab, postsPage, commentsPage, favoritesPage])
 
   const handleTabChange = (key: string) => {
     setActiveTab(key)
@@ -105,7 +115,7 @@ export default function UserContentTabs({ userId }: UserContentTabsProps) {
   }
 
   const renderPostItem = (item: PostListItem) => {
-    const statusInfo = postStatusMap[item.status]
+    const statusInfo = postStatusMap[item.status as PostStatus]
     return (
       <List.Item
         style={{ cursor: 'pointer', padding: '16px 0' }}
@@ -183,7 +193,7 @@ export default function UserContentTabs({ userId }: UserContentTabsProps) {
     {
       key: 'posts',
       label: `帖子 (${postsTotal})`,
-      children: loading && activeTab === 'posts' ? (
+      children: postsLoading ? (
         <div style={{ textAlign: 'center', padding: 40 }}><Spin /></div>
       ) : posts.length === 0 ? (
         <Empty description="暂无帖子" />
@@ -207,7 +217,7 @@ export default function UserContentTabs({ userId }: UserContentTabsProps) {
     {
       key: 'comments',
       label: `评论 (${commentsTotal})`,
-      children: loading && activeTab === 'comments' ? (
+      children: commentsLoading ? (
         <div style={{ textAlign: 'center', padding: 40 }}><Spin /></div>
       ) : comments.length === 0 ? (
         <Empty description="暂无评论" />
@@ -231,7 +241,7 @@ export default function UserContentTabs({ userId }: UserContentTabsProps) {
     {
       key: 'favorites',
       label: `收藏 (${favoritesTotal})`,
-      children: loading && activeTab === 'favorites' ? (
+      children: favoritesLoading ? (
         <div style={{ textAlign: 'center', padding: 40 }}><Spin /></div>
       ) : favorites.length === 0 ? (
         <Empty description="暂无收藏" />

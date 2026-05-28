@@ -4,6 +4,8 @@ import com.techcommunity.common.PageResult;
 import com.techcommunity.dto.request.PostCreateRequest;
 import com.techcommunity.dto.response.PostResponse;
 
+import java.util.List;
+
 public interface PostService {
 
     Long createPost(PostCreateRequest request, Long userId);
@@ -16,11 +18,18 @@ public interface PostService {
 
     PageResult<PostResponse> getPostList(Long categoryId, String keyword, String sortBy,
                                           Boolean isTop, Boolean isEssence, Long authorId,
+                                          Long currentUserId,
                                           Integer page, Integer size);
+
+    PageResult<PostResponse> getPostsByIds(List<Long> postIds, Long currentUserId, Integer page, Integer size);
 
     void topPost(Long postId, Integer isTop);
 
     void essencePost(Long postId, Integer isEssence);
 
     void blockPost(Long postId);
+
+    void movePost(Long postId, Long categoryId);
+
+    void adminDeletePost(Long postId);
 }

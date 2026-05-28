@@ -17,6 +17,7 @@ const EditPost = lazy(() => import('@/pages/EditPost'))
 const Profile = lazy(() => import('@/pages/Profile'))
 const Search = lazy(() => import('@/pages/Search'))
 const Notifications = lazy(() => import('@/pages/Notifications'))
+const Favorites = lazy(() => import('@/pages/Favorites'))
 const AdminDashboard = lazy(() => import('@/pages/Admin/Dashboard'))
 const UserManage = lazy(() => import('@/pages/Admin/UserManage'))
 const CategoryManage = lazy(() => import('@/pages/Admin/CategoryManage'))
@@ -57,6 +58,7 @@ export default function AppRoutes() {
           <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
           <Route path="/profile/:id" element={<AuthGuard><Profile /></AuthGuard>} />
           <Route path="/notifications" element={<AuthGuard><Notifications /></AuthGuard>} />
+          <Route path="/favorites" element={<AuthGuard><Favorites /></AuthGuard>} />
         </Route>
 
         <Route element={<AdminGuard><AdminLayout /></AdminGuard>}>

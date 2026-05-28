@@ -32,6 +32,7 @@ public class Constants {
     public static final int REPORT_STATUS_BLOCKED = 1;
     public static final int REPORT_STATUS_IGNORED = 2;
     public static final int REPORT_STATUS_WARNED = 3;
+    public static final int REPORT_STATUS_HANDLED = 4;
 
     public static final int TARGET_TYPE_POST = 1;
     public static final int TARGET_TYPE_COMMENT = 2;

@@ -1,4 +1,4 @@
-package com.techcommunity.service;
+package com.techcommunity.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -18,6 +18,7 @@ import com.techcommunity.mapper.UserMapper;
 import com.techcommunity.mapper.UserRoleMapper;
 import com.techcommunity.security.JwtTokenProvider;
 import com.techcommunity.security.SecurityUtils;
+import com.techcommunity.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -99,6 +100,15 @@ public class AuthServiceImpl implements AuthService {
 
         if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(LocalDateTime.now())) {
             throw new BusinessException(ErrorCode.USER_LOCKED);
+        }
+
+        if (user.getLockedUntil() != null && !user.getLockedUntil().isAfter(LocalDateTime.now())) {
+            userMapper.update(null, new LambdaUpdateWrapper<User>()
+                    .eq(User::getId, user.getId())
+                    .set(User::getLoginFailCount, 0)
+                    .set(User::getLockedUntil, null));
+            user.setLoginFailCount(0);
+            user.setLockedUntil(null);
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {

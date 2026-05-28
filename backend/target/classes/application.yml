@@ -1,0 +1,84 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  application:
+    name: tech-community
+
+  profiles:
+    active: dev
+
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    serialization:
+      write-dates-as-timestamps: false
+
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.techcommunity.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+jwt:
+  secret: ${JWT_SECRET:techcommunity-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256}
+  expiration: 86400000
+  refresh-expiration: 604800000
+  header: Authorization
+  prefix: Bearer
+
+cas:
+  enabled: false
+  server-url: https://cas.example.com/cas
+  client-service: http://localhost:8080/api/auth/cas-callback
+
+ai:
+  enabled: false
+  base-url: https://api.openai.com
+  api-key: ${AI_API_KEY:}
+  model: gpt-4o-mini
+  max-tokens: 2000
+  temperature: 0.7
+  timeout: 60000
+
+file:
+  upload-path: ./uploads
+  avatar-path: ./uploads/avatars
+  max-avatar-size: 2097152
+
+rate-limit:
+  enabled: true
+  post-limit: 10
+  post-period: 3600
+  comment-limit: 30
+  comment-period: 3600
+
+content-filter:
+  enabled: true
+  mode: reject
+
+notification:
+  retention-days: 30
+
+logging:
+  level:
+    com.techcommunity: debug
+    org.springframework.security: info

@@ -1,10 +1,10 @@
 import type { PostStatus, SortBy } from './common'
-import type { UserPublic } from './user'
+import type { User } from './user'
+import type { AiResponse } from './interaction'
 
 export interface Post {
   id: number
   categoryId: number
-  userId: number
   title: string
   content: string
   summary?: string
@@ -21,29 +21,52 @@ export interface Post {
   updatedAt: string
 }
 
-export interface PostDetail extends Post {
+export interface PostResponse {
+  id: number
+  categoryId: number
   categoryName: string
-  author: UserPublic
+  author: User
+  title: string
+  content: string
+  summary?: string
+  viewCount: number
+  likeCount: number
+  commentCount: number
+  favoriteCount: number
+  shareCount: number
+  isTop: number
+  isEssence: number
+  aiRequested: number
+  status: number
+  aiResponse?: AiResponse
   liked: boolean
   favorited: boolean
+  createdAt: string
+  updatedAt: string
 }
 
 export interface PostListItem {
   id: number
   title: string
   summary?: string
+  content?: string
   categoryId: number
   categoryName: string
-  author: UserPublic
+  author: User
   viewCount: number
   likeCount: number
   commentCount: number
   favoriteCount: number
+  shareCount?: number
   isTop: number
   isEssence: number
   aiRequested: number
-  status: PostStatus
+  status: number
+  liked?: boolean
+  favorited?: boolean
+  aiResponse?: AiResponse
   createdAt: string
+  updatedAt?: string
 }
 
 export interface PostCreateRequest {

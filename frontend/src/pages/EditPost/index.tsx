@@ -4,7 +4,7 @@ import { Card, Form, Input, Button, Switch, message, Typography, Spin } from 'an
 import { ArrowLeftOutlined, SendOutlined } from '@ant-design/icons'
 import request from '@/api'
 import type { Result } from '@/types/common'
-import type { PostDetail } from '@/types/post'
+import type { PostResponse } from '@/types/post'
 import CategoryCascader from '@/components/CategoryCascader'
 import RichEditor from '@/components/RichEditor'
 
@@ -26,7 +26,7 @@ export default function EditPost() {
   const fetchPost = async () => {
     setFetching(true)
     try {
-      const { data } = await request.get<Result<PostDetail>>(`/posts/${id}`)
+      const { data } = await request.get<Result<PostResponse>>(`/posts/${id}`)
       if (data.data) {
         form.setFieldsValue({
           title: data.data.title,

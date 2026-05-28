@@ -16,8 +16,9 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping("/tree")
-    public Result<List<CategoryTreeResponse>> getTree() {
-        List<CategoryTreeResponse> tree = categoryService.getTree();
+    public Result<List<CategoryTreeResponse>> getTree(
+            @RequestParam(required = false, defaultValue = "false") Boolean includeDisabled) {
+        List<CategoryTreeResponse> tree = categoryService.getTree(includeDisabled);
         return Result.success(tree);
     }
 

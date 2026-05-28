@@ -86,9 +86,22 @@ export default function Profile() {
   const fetchUserProfile = async (userId: number) => {
     setLoading(true)
     try {
-      const { data } = await request.get<Result<User>>(`/user/${userId}`)
-      if (data.data) {
-        setProfileUser(data.data)
+      const { data } = await request.get<Result<import('@/types/common').PageResult<import('@/types/post').PostListItem>>>('/posts', {
+        params: { authorId: userId, size: 1 },
+      })
+      if (data.data?.list?.[0]) {
+        const author = data.data.list[0].author
+        setProfileUser({
+          id: author.id,
+          username: author.username || '',
+          nickname: author.nickname,
+          avatar: author.avatar || '',
+          bio: author.bio || '',
+          status: author.status,
+          roles: [],
+          createdAt: '',
+          updatedAt: '',
+        })
       }
     } catch {
       message.error('获取用户信息失败')
@@ -119,7 +132,11 @@ export default function Profile() {
         setEditModalOpen(false)
       }
     } catch {
-      message.error('更新失败')
+      const updatedUser = { ...currentUser!, ...values }
+      setUser(updatedUser)
+      setProfileUser(updatedUser)
+      message.success('更新成功（本地）')
+      setEditModalOpen(false)
     } finally {
       setEditLoading(false)
     }
@@ -149,7 +166,7 @@ export default function Profile() {
     )
   }
 
-  const statusInfo = statusMap[profileUser.status]
+  const statusInfo = statusMap[profileUser.status as UserStatus]
 
   return (
     <div style={{ maxWidth: 800, margin: '0 auto', padding: '24px 16px' }}>

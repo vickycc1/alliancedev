@@ -1,32 +1,9 @@
 import type { NotificationType, ReportStatus, TargetType, ShareChannel, AiResponseStatus } from './common'
-import type { UserPublic } from './user'
-
-export interface Like {
-  id: number
-  userId: number
-  targetId: number
-  targetType: TargetType
-  createdAt: string
-}
+import type { User } from './user'
 
 export interface LikeToggleRequest {
   targetId: number
-  targetType: TargetType
-}
-
-export interface Favorite {
-  id: number
-  userId: number
-  postId: number
-  createdAt: string
-}
-
-export interface Share {
-  id: number
-  userId: number
-  postId: number
-  channel?: ShareChannel
-  createdAt: string
+  targetType: number
 }
 
 export interface ShareRequest {
@@ -44,7 +21,7 @@ export interface Notification {
   relatedId?: number
   isRead: number
   createdAt: string
-  sender?: UserPublic
+  sender?: User
 }
 
 export interface Report {
@@ -62,7 +39,7 @@ export interface Report {
 
 export interface ReportCreateRequest {
   targetId: number
-  targetType: TargetType
+  targetType: number
   reason: string
 }
 

@@ -1,16 +1,17 @@
 import { useState, useEffect } from 'react'
-import { Avatar, Button, Typography, Spin, Empty, Divider, message, Modal, Pagination } from 'antd'
+import { Avatar, Button, Typography, Spin, Empty, Divider, message, Modal, Pagination, Radio, Input } from 'antd'
 import {
   LikeOutlined,
   LikeFilled,
   MessageOutlined,
   DeleteOutlined,
+  FlagOutlined,
 } from '@ant-design/icons'
 import request from '@/api'
 import type { Result, PageResult, TargetType } from '@/types/common'
 import type { CommentWithUser } from '@/types/comment'
 import { useAuthStore } from '@/store/useAuthStore'
-import { RoleCode } from '@/types/common'
+import { RoleCode, TargetType as TType } from '@/types/common'
 import CommentInput from '@/components/CommentInput'
 
 const { Text, Paragraph } = Typography
@@ -24,13 +25,11 @@ interface CommentListProps {
 function CommentItem({
   comment,
   postId,
-  onReply,
   onDelete,
   depth = 0,
 }: {
   comment: CommentWithUser
   postId: number
-  onReply: (comment: CommentWithUser) => void
   onDelete: (id: number) => void
   depth?: number
 }) {
@@ -39,9 +38,13 @@ function CommentItem({
   const [likeCount, setLikeCount] = useState(comment.likeCount)
   const [liking, setLiking] = useState(false)
   const [showReplyInput, setShowReplyInput] = useState(false)
+  const [replyToUser, setReplyToUser] = useState<{ id: number; nickname: string } | null>(null)
   const [children, setChildren] = useState<CommentWithUser[]>(comment.children || [])
+  const [reportVisible, setReportVisible] = useState(false)
+  const [reportReason, setReportReason] = useState('')
+  const [reportLoading, setReportLoading] = useState(false)
 
-  const isAuthor = currentUser && currentUser.id === comment.userId
+  const isAuthor = currentUser && currentUser.id === comment.author.id
   const isAdmin = currentUser?.roles.includes(RoleCode.ADMIN)
 
   const handleLike = async () => {
@@ -80,6 +83,27 @@ function CommentItem({
   const handleReplySuccess = (newComment: CommentWithUser) => {
     setChildren([...children, newComment])
     setShowReplyInput(false)
+  }
+
+  const submitReport = async () => {
+    if (!reportReason.trim()) {
+      message.warning('请选择或输入举报原因')
+      return
+    }
+    setReportLoading(true)
+    try {
+      await request.post('/interaction/report', {
+        targetId: comment.id,
+        targetType: TType.COMMENT,
+        reason: reportReason,
+      })
+      message.success('举报成功，管理员将尽快处理')
+      setReportVisible(false)
+    } catch {
+      message.error('举报失败')
+    } finally {
+      setReportLoading(false)
+    }
   }
 
   return (
@@ -121,7 +145,10 @@ function CommentItem({
               type="text"
               size="small"
               icon={<MessageOutlined />}
-              onClick={() => onReply(comment)}
+              onClick={() => {
+                setReplyToUser({ id: comment.author.id, nickname: comment.author.nickname })
+                setShowReplyInput(true)
+              }}
               style={{ padding: '0 4px', fontSize: 12, color: '#8F959E' }}
             >
               回复
@@ -135,6 +162,15 @@ function CommentItem({
                 style={{ padding: '0 4px', fontSize: 12, color: '#8F959E' }}
               />
             )}
+            {!isAuthor && (
+              <Button
+                type="text"
+                size="small"
+                icon={<FlagOutlined />}
+                onClick={() => { setReportReason(''); setReportVisible(true) }}
+                style={{ padding: '0 4px', fontSize: 12, color: '#8F959E' }}
+              />
+            )}
           </div>
 
           {showReplyInput && (
@@ -142,12 +178,44 @@ function CommentItem({
               <CommentInput
                 postId={postId}
                 parentId={comment.id}
-                replyToUser={comment.author.nickname}
+                replyToUserId={replyToUser?.id}
+                replyToUser={replyToUser?.nickname}
                 onSuccess={handleReplySuccess}
-                onCancel={() => setShowReplyInput(false)}
+                onCancel={() => { setShowReplyInput(false); setReplyToUser(null) }}
               />
             </div>
           )}
+
+          <Modal
+            title="举报评论"
+            open={reportVisible}
+            onOk={submitReport}
+            onCancel={() => setReportVisible(false)}
+            confirmLoading={reportLoading}
+            okText="提交举报"
+            okButtonProps={{ danger: true }}
+          >
+            <Radio.Group
+              onChange={(e) => setReportReason(e.target.value)}
+              value={reportReason}
+              style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 16 }}
+            >
+              <Radio value="垃圾广告">垃圾广告</Radio>
+              <Radio value="虚假信息">虚假信息</Radio>
+              <Radio value="违法违规">违法违规</Radio>
+              <Radio value="人身攻击">人身攻击</Radio>
+              <Radio value="内容违规">内容违规</Radio>
+              <Radio value="其他">其他</Radio>
+            </Radio.Group>
+            {reportReason === '其他' && (
+              <Input.TextArea
+                rows={3}
+                placeholder="请输入举报原因"
+                style={{ marginTop: 12 }}
+                onChange={(e) => setReportReason(e.target.value)}
+              />
+            )}
+          </Modal>
 
           {children.length > 0 && (
             <div style={{
@@ -160,10 +228,6 @@ function CommentItem({
                   key={child.id}
                   comment={child}
                   postId={postId}
-                  onReply={(c) => {
-                    setShowReplyInput(true)
-                    onReply(c)
-                  }}
                   onDelete={(id) => {
                     setChildren(children.filter((c) => c.id !== id))
                     onDelete(id)
@@ -184,7 +248,6 @@ export default function CommentList({ postId, commentCount, onCommentCountChange
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
-  const [replyTo, setReplyTo] = useState<CommentWithUser | null>(null)
   const pageSize = 10
 
   useEffect(() => {
@@ -195,7 +258,7 @@ export default function CommentList({ postId, commentCount, onCommentCountChange
     setLoading(true)
     try {
       const { data } = await request.get<Result<PageResult<CommentWithUser>>>(
-        `/posts/${postId}/comments`,
+        `/comments/post/${postId}`,
         { params: { page, size: pageSize } },
       )
       if (data.data) {
@@ -222,7 +285,6 @@ export default function CommentList({ postId, commentCount, onCommentCountChange
       }))
       setTotal(total + 1)
     }
-    setReplyTo(null)
     onCommentCountChange?.(commentCount + 1)
   }
 
@@ -230,10 +292,6 @@ export default function CommentList({ postId, commentCount, onCommentCountChange
     setComments(comments.filter((c) => c.id !== id))
     setTotal(total - 1)
     onCommentCountChange?.(commentCount - 1)
-  }
-
-  const handleReply = (comment: CommentWithUser) => {
-    setReplyTo(comment)
   }
 
   return (
@@ -250,23 +308,6 @@ export default function CommentList({ postId, commentCount, onCommentCountChange
         />
       </div>
 
-      {replyTo && (
-        <div style={{
-          padding: '8px 12px',
-          background: '#F0F5FF',
-          borderRadius: 6,
-          marginBottom: 16,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}>
-          <Text style={{ fontSize: 13 }}>
-            回复 <Text strong>{replyTo.author.nickname}</Text>：{replyTo.content.slice(0, 50)}{replyTo.content.length > 50 ? '...' : ''}
-          </Text>
-          <Button type="text" size="small" onClick={() => setReplyTo(null)}>取消</Button>
-        </div>
-      )}
-
       {loading ? (
         <div style={{ textAlign: 'center', padding: 40 }}><Spin /></div>
       ) : comments.length === 0 ? (
@@ -279,7 +320,6 @@ export default function CommentList({ postId, commentCount, onCommentCountChange
                 key={comment.id}
                 comment={comment}
                 postId={postId}
-                onReply={handleReply}
                 onDelete={handleDelete}
               />
             ))}

@@ -33,7 +33,7 @@ export default function CategoryCascader({ value, onChange, placeholder = 'é€‰æ‹
   const [allIds, setAllIds] = useState<number[]>([])
 
   useEffect(() => {
-    request.get<Result<CategoryTree[]>>('/categories').then(({ data }) => {
+    request.get<Result<CategoryTree[]>>('/categories/tree').then(({ data }) => {
       if (data.data) {
         setOptions(transformToOptions(data.data))
         setAllIds(flattenIds(data.data))
@@ -41,7 +41,7 @@ export default function CategoryCascader({ value, onChange, placeholder = 'é€‰æ‹
     })
   }, [])
 
-  const handleChange = (selectedValue: (string | number)[]) => {
+  const handleChange = (selectedValue: (string | number | null)[]) => {
     if (selectedValue.length > 0) {
       onChange?.(Number(selectedValue[selectedValue.length - 1]))
     } else {

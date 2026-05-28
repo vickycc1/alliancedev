@@ -1,0 +1,52 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST:mysql}:${DB_PORT:3306}/${DB_NAME:tech_community}?useUnicode=true&characterEncoding=utf8mb4&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      idle-timeout: 30000
+      pool-name: TechCommunityHikariCP
+      max-lifetime: 1800000
+      connection-timeout: 30000
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+cas:
+  enabled: ${CAS_ENABLED:false}
+  server-url: ${CAS_SERVER_URL:https://cas.example.com/cas}
+  client-service: ${CAS_CLIENT_SERVICE:http://localhost:8080/api/auth/cas-callback}
+
+ai:
+  enabled: ${AI_ENABLED:false}
+  base-url: ${AI_BASE_URL:https://api.openai.com}
+  api-key: ${AI_API_KEY:}
+  model: ${AI_MODEL:gpt-4o-mini}
+  max-tokens: ${AI_MAX_TOKENS:2000}
+  temperature: ${AI_TEMPERATURE:0.7}
+  timeout: ${AI_TIMEOUT:60000}
+
+file:
+  upload-path: ${FILE_UPLOAD_PATH:/app/uploads}
+  avatar-path: ${FILE_AVATAR_PATH:/app/uploads/avatars}
+
+logging:
+  level:
+    com.techcommunity: info
+    org.springframework.web: info

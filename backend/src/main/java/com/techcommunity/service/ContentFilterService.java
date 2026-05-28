@@ -9,4 +9,6 @@ public interface ContentFilterService {
     boolean containsSensitiveWord(String content);
 
     String filterSensitiveWord(String content);
+
+    void refreshSensitiveWords();
 }

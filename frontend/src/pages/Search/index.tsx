@@ -34,7 +34,7 @@ export default function Search() {
   const pageSize = 10
 
   useEffect(() => {
-    request.get<Result<CategoryTree[]>>('/categories').then(({ data }) => {
+    request.get<Result<CategoryTree[]>>('/categories/tree').then(({ data }) => {
       if (data.data) setCategories(data.data)
     })
     request.get<Result<string[]>>('/search/hot-keywords').then(({ data }) => {

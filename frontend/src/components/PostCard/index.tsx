@@ -7,6 +7,7 @@ import {
   FireOutlined,
   CrownOutlined,
   RobotOutlined,
+  HeartFilled,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import type { PostListItem } from '@/types/post'
@@ -17,6 +18,8 @@ const { Text, Paragraph } = Typography
 interface PostCardProps {
   post: PostListItem
 }
+
+const HOT_THRESHOLD = 50
 
 const statusTagMap: Record<number, { label: string; color: string }> = {
   [PostStatus.DRAFT]: { label: '草稿', color: 'default' },
@@ -31,6 +34,9 @@ export default function PostCard({ post }: PostCardProps) {
   const handleClick = () => {
     navigate(`/post/${post.id}`)
   }
+
+  const hotScore = (post.viewCount || 0) * 1 + (post.likeCount || 0) * 3 + (post.commentCount || 0) * 5 + (post.favoriteCount || 0) * 2
+  const isHot = hotScore >= HOT_THRESHOLD
 
   const statusTag = statusTagMap[post.status]
 
@@ -56,6 +62,12 @@ export default function PostCard({ post }: PostCardProps) {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, flexWrap: 'wrap' }}>
+        {post.favorited && (
+          <Tag icon={<HeartFilled />} color="magenta">已收藏</Tag>
+        )}
+        {isHot && !post.isTop && (
+          <Tag icon={<FireOutlined />} color="orange">热门</Tag>
+        )}
         {post.isTop === 1 && (
           <Tag icon={<FireOutlined />} color="red">置顶</Tag>
         )}
@@ -72,6 +84,7 @@ export default function PostCard({ post }: PostCardProps) {
       </div>
 
       <Text strong style={{ fontSize: 17, display: 'block', marginBottom: 6 }}>
+        {isHot && <FireOutlined style={{ color: '#F5222D', marginRight: 6 }} />}
         {post.title}
       </Text>
 
