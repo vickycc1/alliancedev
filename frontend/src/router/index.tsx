@@ -11,6 +11,7 @@ const Essence = lazy(() => import('@/pages/Essence'))
 const Category = lazy(() => import('@/pages/Category'))
 const Login = lazy(() => import('@/pages/Login'))
 const Register = lazy(() => import('@/pages/Register'))
+const ForgotPassword = lazy(() => import('@/pages/ForgotPassword'))
 const Post = lazy(() => import('@/pages/Post'))
 const NewPost = lazy(() => import('@/pages/NewPost'))
 const EditPost = lazy(() => import('@/pages/EditPost'))
@@ -45,6 +46,7 @@ export default function AppRoutes() {
       <Routes>
         <Route path="/login" element={<GuestGuard><Login /></GuestGuard>} />
         <Route path="/register" element={<GuestGuard><Register /></GuestGuard>} />
+        <Route path="/forgot-password" element={<GuestGuard><ForgotPassword /></GuestGuard>} />
 
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />

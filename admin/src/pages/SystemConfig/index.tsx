@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
-  Card, Tabs, Form, Input, InputNumber, Button, Space, message, Spin, Table, Modal,
+  Card, Tabs, Form, Input, InputNumber, Button, Space, message, Spin, Table, Modal, Switch,
 } from 'antd'
 import {
   RobotOutlined, SafetyOutlined, ApiOutlined, ThunderboltOutlined, BellOutlined, PlusOutlined, DeleteOutlined,
@@ -171,6 +171,9 @@ export default function SystemConfig() {
       ),
       children: (
         <Form form={form} layout="vertical" style={{ maxWidth: 600 }}>
+          <Form.Item name="aiEnabled" label="启用 AI 回答" valuePropName="checked" initialValue={true}>
+            <Switch checkedChildren="开" unCheckedChildren="关" />
+          </Form.Item>
           <Form.Item name="aiBaseUrl" label="API Base URL" rules={[{ required: true, message: '请输入 API 地址' }]}>
             <Input placeholder="https://api.openai.com/v1" />
           </Form.Item>

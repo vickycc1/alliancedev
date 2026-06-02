@@ -59,6 +59,7 @@ export interface AdminSystemConfig {
   aiModel: string
   aiTemperature: number
   aiMaxTokens: number
+  aiEnabled: boolean
   casServerUrl: string
   casCallbackUrl: string
   postRateLimit: number

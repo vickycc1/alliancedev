@@ -153,6 +153,7 @@ public class AdminController {
         response.setAiModel(getConfigValue("ai_model", aiConfig.getModel()));
         response.setAiTemperature(getConfigValueDouble("ai_temperature", aiConfig.getTemperature()));
         response.setAiMaxTokens(getConfigValueInt("ai_max_tokens", aiConfig.getMaxTokens()));
+        response.setAiEnabled(Boolean.parseBoolean(getConfigValue("ai_enabled", String.valueOf(aiConfig.getEnabled()))));
         response.setCasServerUrl(getConfigValue("cas_server_url", casConfig.getServerUrl()));
         response.setCasCallbackUrl(getConfigValue("cas_callback_url", casConfig.getClientService()));
         response.setPostRateLimit(getConfigValueInt("post_rate_limit", 10));
@@ -168,6 +169,7 @@ public class AdminController {
         if (request.getAiModel() != null) setConfigValue("ai_model", request.getAiModel());
         if (request.getAiTemperature() != null) setConfigValue("ai_temperature", String.valueOf(request.getAiTemperature()));
         if (request.getAiMaxTokens() != null) setConfigValue("ai_max_tokens", String.valueOf(request.getAiMaxTokens()));
+        if (request.getAiEnabled() != null) setConfigValue("ai_enabled", String.valueOf(request.getAiEnabled()));
         if (request.getCasServerUrl() != null) setConfigValue("cas_server_url", request.getCasServerUrl());
         if (request.getCasCallbackUrl() != null) setConfigValue("cas_callback_url", request.getCasCallbackUrl());
         if (request.getPostRateLimit() != null) setConfigValue("post_rate_limit", String.valueOf(request.getPostRateLimit()));

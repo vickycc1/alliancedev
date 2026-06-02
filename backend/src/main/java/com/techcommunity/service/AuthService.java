@@ -17,4 +17,8 @@ public interface AuthService {
     void logout();
 
     UserResponse getCurrentUser();
+
+    String sendResetCode(String account);
+
+    void resetPassword(com.techcommunity.dto.request.PasswordResetRequest request);
 }

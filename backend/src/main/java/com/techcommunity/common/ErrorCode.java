@@ -24,6 +24,10 @@ public enum ErrorCode {
     EMAIL_EXISTS(1006, "邮箱已被使用"),
     LOGIN_FAIL_LIMIT(1007, "登录失败次数过多，请稍后重试"),
     OLD_PASSWORD_ERROR(1008, "旧密码错误"),
+    RESET_CODE_INVALID(1009, "验证码无效或已过期"),
+    RESET_CODE_SEND_LIMIT(1010, "验证码发送过于频繁，请稍后重试"),
+    ACCOUNT_NOT_FOUND(1011, "该账号不存在"),
+    PASSWORD_NOT_MATCH(1012, "两次输入的密码不一致"),
 
     POST_NOT_FOUND(2001, "帖子不存在"),
     POST_NO_PERMISSION(2002, "无权操作此帖子"),

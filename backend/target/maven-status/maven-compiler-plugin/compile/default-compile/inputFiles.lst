@@ -28,12 +28,14 @@ F:\ai\alliancedev\backend\src\main\java\com\techcommunity\mapper\PostMapper.java
 F:\ai\alliancedev\backend\src\main\java\com\techcommunity\mapper\SensitiveWordMapper.java
 F:\ai\alliancedev\backend\src\main\java\com\techcommunity\dto\request\LikeToggleRequest.java
 F:\ai\alliancedev\backend\src\main\java\com\techcommunity\controller\AuthController.java
+F:\ai\alliancedev\backend\src\main\java\com\techcommunity\service\impl\AiServiceImpl.java
 F:\ai\alliancedev\backend\src\main\java\com\techcommunity\config\MybatisPlusConfig.java
 F:\ai\alliancedev\backend\src\main\java\com\techcommunity\dto\request\PostCreateRequest.java
 F:\ai\alliancedev\backend\src\main\java\com\techcommunity\entity\Notification.java
 F:\ai\alliancedev\backend\src\main\java\com\techcommunity\entity\Report.java
 F:\ai\alliancedev\backend\src\main\java\com\techcommunity\mapper\FavoriteMapper.java
 F:\ai\alliancedev\backend\src\main\java\com\techcommunity\mapper\ShareMapper.java
+F:\ai\alliancedev\backend\src\main\java\com\techcommunity\service\AiService.java
 F:\ai\alliancedev\backend\src\main\java\com\techcommunity\mapper\CategoryMapper.java
 F:\ai\alliancedev\backend\src\main\java\com\techcommunity\TechCommunityApplication.java
 F:\ai\alliancedev\backend\src\main\java\com\techcommunity\security\UserDetailsServiceImpl.java
@@ -97,5 +99,6 @@ F:\ai\alliancedev\backend\src\main\java\com\techcommunity\mapper\AiResponseMappe
 F:\ai\alliancedev\backend\src\main\java\com\techcommunity\exception\GlobalExceptionHandler.java
 F:\ai\alliancedev\backend\src\main\java\com\techcommunity\entity\Like.java
 F:\ai\alliancedev\backend\src\main\java\com\techcommunity\dto\response\UserSimpleResponse.java
+F:\ai\alliancedev\backend\src\main\java\com\techcommunity\dto\request\PasswordResetRequest.java
 F:\ai\alliancedev\backend\src\main\java\com\techcommunity\annotation\RateLimit.java
 F:\ai\alliancedev\backend\src\main\java\com\techcommunity\service\AdminService.java

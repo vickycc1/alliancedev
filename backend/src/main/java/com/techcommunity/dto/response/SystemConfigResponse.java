@@ -10,6 +10,7 @@ public class SystemConfigResponse {
     private String aiModel;
     private Double aiTemperature;
     private Integer aiMaxTokens;
+    private Boolean aiEnabled;
     private String casServerUrl;
     private String casCallbackUrl;
     private Integer postRateLimit;

@@ -3,6 +3,7 @@ package com.techcommunity.controller;
 import com.techcommunity.common.Constants;
 import com.techcommunity.common.Result;
 import com.techcommunity.dto.request.LoginRequest;
+import com.techcommunity.dto.request.PasswordResetRequest;
 import com.techcommunity.dto.request.RefreshTokenRequest;
 import com.techcommunity.dto.request.RegisterRequest;
 import com.techcommunity.dto.response.LoginResponse;
@@ -13,6 +14,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.techcommunity.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,6 +28,9 @@ public class AuthController {
     private final AuthService authService;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${spring.profiles.active:prod}")
+    private String activeProfile;
 
     @PostMapping("/register")
     public Result<Void> register(@Valid @RequestBody RegisterRequest request) {
@@ -71,6 +76,21 @@ public class AuthController {
                             .set(User::getStatus, Constants.USER_STATUS_NORMAL);
             userMapper.update(null, updateWrapper);
         }
+        return Result.success();
+    }
+
+    @PostMapping("/forgot-password/send-code")
+    public Result<String> sendResetCode(@RequestParam String account) {
+        String code = authService.sendResetCode(account);
+        if ("dev".equals(activeProfile)) {
+            return Result.success(code);
+        }
+        return Result.success();
+    }
+
+    @PostMapping("/forgot-password/reset")
+    public Result<Void> resetPassword(@Valid @RequestBody PasswordResetRequest request) {
+        authService.resetPassword(request);
         return Result.success();
     }
 

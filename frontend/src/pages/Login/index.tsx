@@ -87,11 +87,9 @@ export default function Login() {
               <Form.Item name="remember" valuePropName="checked" noStyle>
                 <Checkbox>记住我</Checkbox>
               </Form.Item>
-              <Text
-                style={{ color: '#1677FF', cursor: 'pointer', fontSize: 14 }}
-              >
+              <Link to="/forgot-password" style={{ color: '#1677FF', cursor: 'pointer', fontSize: 14 }}>
                 忘记密码？
-              </Text>
+              </Link>
             </div>
           </Form.Item>
 

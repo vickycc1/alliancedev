@@ -24,9 +24,13 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
   loading: false,
 
   fetchUnreadCount: async () => {
-    const { data } = await request.get<Result<number>>('/notifications/unread-count')
-    if (data.data !== undefined) {
-      set({ unreadCount: data.data })
+    try {
+      const { data } = await request.get<Result<number>>('/notifications/unread-count')
+      if (data.data !== undefined) {
+        set({ unreadCount: data.data })
+      }
+    } catch {
+      set({ unreadCount: 0 })
     }
   },
 
@@ -39,6 +43,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       if (data.data) {
         set({ notifications: data.data.list })
       }
+    } catch {
+      set({ notifications: [] })
     } finally {
       set({ loading: false })
     }

@@ -6,6 +6,7 @@ import com.techcommunity.common.Constants;
 import com.techcommunity.common.ErrorCode;
 import com.techcommunity.config.JwtConfig;
 import com.techcommunity.dto.request.LoginRequest;
+import com.techcommunity.dto.request.PasswordResetRequest;
 import com.techcommunity.dto.request.RegisterRequest;
 import com.techcommunity.dto.response.LoginResponse;
 import com.techcommunity.dto.response.UserResponse;
@@ -243,5 +244,94 @@ public class AuthServiceImpl implements AuthService {
         response.setRoles(roles);
 
         return response;
+    }
+
+    @Override
+    public String sendResetCode(String account) {
+        String limitKey = "reset_code_limit:" + account;
+        Object limitFlag = redisTemplate.opsForValue().get(limitKey);
+        if (limitFlag != null) {
+            throw new BusinessException(ErrorCode.RESET_CODE_SEND_LIMIT);
+        }
+
+        User user = findUserByAccount(account);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND);
+        }
+
+        if (user.getEmail() == null || user.getEmail().isEmpty()) {
+            throw new BusinessException(ErrorCode.BAD_REQUEST.getCode(), "该账号未绑定邮箱，无法通过邮箱重置密码，请联系管理员");
+        }
+
+        String code = String.format("%06d", (int) (Math.random() * 1000000));
+        String codeKey = "reset_code:" + account;
+        redisTemplate.opsForValue().set(codeKey, code, 10, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set(limitKey, "1", 60, TimeUnit.SECONDS);
+
+        log.info("密码重置验证码: account={}, code={}, email={}", account, code, maskEmail(user.getEmail()));
+
+        return code;
+    }
+
+    @Override
+    public void resetPassword(PasswordResetRequest request) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new BusinessException(ErrorCode.PASSWORD_NOT_MATCH);
+        }
+
+        String codeKey = "reset_code:" + request.getAccount();
+        Object storedCode = redisTemplate.opsForValue().get(codeKey);
+        if (storedCode == null) {
+            throw new BusinessException(ErrorCode.RESET_CODE_INVALID);
+        }
+        String storedCodeStr = storedCode.toString().replace("\"", "");
+        if (!storedCodeStr.equals(request.getCode())) {
+            throw new BusinessException(ErrorCode.RESET_CODE_INVALID);
+        }
+
+        User user = findUserByAccount(request.getAccount());
+        if (user == null) {
+            throw new BusinessException(ErrorCode.ACCOUNT_NOT_FOUND);
+        }
+
+        userMapper.update(null, new LambdaUpdateWrapper<User>()
+                .eq(User::getId, user.getId())
+                .set(User::getPassword, passwordEncoder.encode(request.getNewPassword()))
+                .set(User::getLoginFailCount, 0)
+                .set(User::getLockedUntil, null));
+
+        redisTemplate.delete(codeKey);
+        redisTemplate.delete("reset_code_limit:" + request.getAccount());
+
+        String tokenKey = "token:" + user.getId();
+        String refreshTokenKey = "refresh_token:" + user.getId();
+        redisTemplate.delete(tokenKey);
+        redisTemplate.delete(refreshTokenKey);
+
+        log.info("用户密码重置成功: username={}", user.getUsername());
+    }
+
+    private User findUserByAccount(String account) {
+        User user = userMapper.selectOne(
+                new LambdaQueryWrapper<User>().eq(User::getUsername, account)
+        );
+        if (user == null) {
+            user = userMapper.selectOne(
+                    new LambdaQueryWrapper<User>().eq(User::getEmail, account)
+            );
+        }
+        return user;
+    }
+
+    private String maskEmail(String email) {
+        if (email == null || !email.contains("@")) {
+            return "***";
+        }
+        String[] parts = email.split("@");
+        String local = parts[0];
+        if (local.length() <= 2) {
+            return local.charAt(0) + "***@" + parts[1];
+        }
+        return local.charAt(0) + "***" + local.charAt(local.length() - 1) + "@" + parts[1];
     }
 }

@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Badge, Popover, Avatar, Button, Typography, Empty, Spin } from 'antd'
 import { BellOutlined, UserOutlined, CheckOutlined } from '@ant-design/icons'
+import { useAuthStore } from '@/store/useAuthStore'
 import { useNotificationStore } from '@/store/useNotificationStore'
 import { NotificationType } from '@/types/common'
 import type { Notification } from '@/types/interaction'
@@ -25,6 +26,7 @@ const typeAccentMap: Record<number, { icon: React.ReactNode; accent: string; bg:
 
 export default function NotificationBell() {
   const navigate = useNavigate()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const {
     unreadCount,
     notifications,
@@ -37,12 +39,13 @@ export default function NotificationBell() {
   const timerRef = useRef<ReturnType<typeof setInterval>>()
 
   useEffect(() => {
+    if (!isAuthenticated) return
     fetchUnreadCount()
     timerRef.current = setInterval(fetchUnreadCount, 30000)
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
     }
-  }, [fetchUnreadCount])
+  }, [fetchUnreadCount, isAuthenticated])
 
   const handleOpenChange = (open: boolean) => {
     if (open) {
